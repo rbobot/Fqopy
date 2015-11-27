@@ -134,13 +134,21 @@ namespace Qopy
                 }
             }
             catch (ArgumentException ex)
-            { WriteError(new ErrorRecord(ex, "1", ErrorCategory.InvalidArgument, source)); }
+            { 
+                WriteError(new ErrorRecord(ex, "1", ErrorCategory.InvalidArgument, source)); 
+            }
             catch (DirectoryNotFoundException ex)
-            { WriteError(new ErrorRecord(ex, "2", ErrorCategory.ObjectNotFound, source)); }
+            {
+                WriteError(new ErrorRecord(ex, "2", ErrorCategory.ObjectNotFound, source)); 
+            }
             catch (IOException ex)
-            { WriteError(new ErrorRecord(ex, "3", ErrorCategory.ReadError, source)); }
+            {
+                WriteError(new ErrorRecord(ex, "3", ErrorCategory.ReadError, source)); 
+            }
             catch (UnauthorizedAccessException ex)
-            { WriteError(new ErrorRecord(ex, "4", ErrorCategory.PermissionDenied, source)); }
+            {
+                WriteError(new ErrorRecord(ex, "4", ErrorCategory.PermissionDenied, source)); 
+            }
 
             foreach (string file in listOfFiles)
             {
@@ -149,130 +157,156 @@ namespace Qopy
                 string destinationPath = Path.GetDirectoryName(file.Replace(source, destination));
 
                 if (!listOfDestDirs.Contains(destinationPath))
+                {
                     listOfDestDirs.Add(destinationPath);
+                }
             }
-
         }
 
         protected override void EndProcessing()
         {
             if (listOfFiles != null)
             {
-                ProgressRecord progress = new ProgressRecord(0, String.Format("Copy from {0} to {1}", source, destination), "Copying");
-                DateTime startTime = DateTime.Now;
                 int i = 0;
+                var progress = new ProgressRecord(0, String.Format("Copy from {0} to {1}", source, destination), "Copying");
+                var startTime = DateTime.Now;
 
                 foreach (string dir in listOfDestDirs)
                 {
                     try
                     {
                         if (!Directory.Exists(dir))
+                        {
                             Directory.CreateDirectory(dir);
+                        }
                     }
                     catch (UnauthorizedAccessException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (PathTooLongException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (ArgumentNullException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (ArgumentException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (DirectoryNotFoundException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (NotSupportedException ex)
-                    { WriteVerbose(ex.Message); }
+                    {
+                        WriteVerbose(ex.Message); 
+                    }
                     catch (IOException ex)
-                    { WriteVerbose(ex.Message); }
+                    { 
+                        WriteVerbose(ex.Message); 
+                    }
                 }
 
                 foreach (string file in listOfFiles)
                 {
                     string fullDestination = file.Replace(source, destination);
 
-                    FileCopyResultsItem item = new FileCopyResultsItem() { Source = file, Destination = fullDestination };
+                    var item  = new FileCopyResultsItem() { Source = file, Destination = fullDestination };
 
-                    DateTime start = DateTime.Now;
+                    var start = DateTime.Now;
 
-                    using (FileStream sourceFs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read ))
+                    if (!File.Exists(file))
                     {
-                        foreach (byte b in crc32.ComputeHash(sourceFs)) item.SourceCRC += b.ToString("x2").ToLower();
-                        
-                        try
+                        var er = new ErrorRecord(new Exception(String.Format("File not found: {0}", file)), "6", ErrorCategory.SecurityError, fullDestination);
+                        item.ErrorMessage = er.Exception.Message;
+                    }
+                    else
+                    {
+                        using (FileStream sourceFs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            using (FileStream dstFs = File.Open(fullDestination, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+                            foreach (byte b in crc32.ComputeHash(sourceFs))
                             {
-                                bool copyTheFile = false;
+                                item.SourceCRC += b.ToString("x2").ToLower();
+                            }
 
-                                if (sourceFs.Length > 0 && (dstFs.Length == 0 || overwrite)) 
-                                    copyTheFile = true;
-                                
-                                if (dstFs.Length > 0 && overwrite)
+                            try
+                            {
+                                using (FileStream dstFs = File.Open(fullDestination, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
                                 {
-                                    dstFs.SetLength(0);
-                                    dstFs.Flush();
-                                    copyTheFile = true;
+                                    bool copyTheFile = false;
+
+                                    if (sourceFs.Length > 0 && (dstFs.Length == 0 || overwrite))
+                                        copyTheFile = true;
+
+                                    if (dstFs.Length > 0 && overwrite)
+                                    {
+                                        dstFs.SetLength(0);
+                                        dstFs.Flush();
+                                        copyTheFile = true;
+                                    }
+
+                                    if (copyTheFile)
+                                    {
+                                        sourceFs.Position = 0;
+                                        dstFs.Position = 0;
+                                        sourceFs.CopyTo(dstFs);
+                                    }
+
+                                    dstFs.Position = 0;
+                                    foreach (byte b in crc32.ComputeHash(dstFs)) item.DestinationCRC += b.ToString("x2").ToLower();
+                                    item.Size = dstFs.Length;
                                 }
 
-                                if (copyTheFile)
+                                if (settime)
                                 {
-                                    sourceFs.Position = 0;
-                                    dstFs.Position = 0;
-                                    sourceFs.CopyTo(dstFs);     
-                                }                               
-                                
-                                dstFs.Position = 0;
-                                foreach (byte b in crc32.ComputeHash(dstFs)) item.DestinationCRC += b.ToString("x2").ToLower();
-                                item.Size = dstFs.Length;
+                                    File.SetCreationTimeUtc(fullDestination, File.GetCreationTimeUtc(file));
+                                    File.SetLastWriteTimeUtc(fullDestination, File.GetLastWriteTimeUtc(file));
+                                    File.SetLastAccessTimeUtc(fullDestination, File.GetLastAccessTimeUtc(file));
+                                }
                             }
-                            
-                            if (settime)
+                            catch (UnauthorizedAccessException ex)
                             {
-                                File.SetCreationTimeUtc(fullDestination, File.GetCreationTimeUtc(file));
-                                File.SetLastWriteTimeUtc(fullDestination, File.GetLastWriteTimeUtc(file));
-                                File.SetLastAccessTimeUtc(fullDestination, File.GetLastAccessTimeUtc(file));
+                                var er = new ErrorRecord(ex, "6", ErrorCategory.SecurityError, fullDestination);
+                                item.ErrorMessage = er.Exception.Message;
                             }
-                        }
-                        catch (FileNotFoundException ex)
-                        {
-                            ErrorRecord er = new ErrorRecord(ex, "5", ErrorCategory.ReadError, fullDestination);
-                            item.ErrorMessage = er.Exception.Message;
-                        }
-                        catch (UnauthorizedAccessException ex)
-                        {   ErrorRecord er = new ErrorRecord(ex, "6", ErrorCategory.SecurityError, fullDestination);
-                            item.ErrorMessage = er.Exception.Message;
-                        }
-                        catch (NotSupportedException ex)
-                        {   
-                            ErrorRecord er = new ErrorRecord(ex, "7", ErrorCategory.InvalidOperation, sourceFs);
-                            item.ErrorMessage = er.Exception.Message;
-                        }
-                        catch (ObjectDisposedException ex)
-                        { 
-                            ErrorRecord er = new ErrorRecord(ex, "8", ErrorCategory.ResourceUnavailable, sourceFs);
-                            item.ErrorMessage = er.Exception.Message;
-                        }
-                        catch (IOException ex)
-                        { 
-                            ErrorRecord er = new ErrorRecord(ex, "9", ErrorCategory.WriteError, fullDestination);
-                            item.ErrorMessage = er.Exception.Message;  
-                        }
+                            catch (NotSupportedException ex)
+                            {
+                                var er = new ErrorRecord(ex, "7", ErrorCategory.InvalidOperation, sourceFs);
+                                item.ErrorMessage = er.Exception.Message;
+                            }
+                            catch (ObjectDisposedException ex)
+                            {
+                                var er = new ErrorRecord(ex, "8", ErrorCategory.ResourceUnavailable, sourceFs);
+                                item.ErrorMessage = er.Exception.Message;
+                            }
+                            catch (IOException ex)
+                            {
+                                var er = new ErrorRecord(ex, "9", ErrorCategory.WriteError, fullDestination);
+                                item.ErrorMessage = er.Exception.Message;
+                            }
 
+                        }
+                        
+                        item.Time = DateTime.Now - start;
+                        item.Match = item.SourceCRC == item.DestinationCRC;
                     }
 
-                    DateTime end = DateTime.Now;
-
-                    item.Time = end - start;
-                    item.Match = item.SourceCRC == item.DestinationCRC;
-
-                    int pct = (int)((double)++i / (double)countOfFiles * 100);
-                    progress.PercentComplete = pct <= 100 ? pct : 100;
-                    progress.SecondsRemaining = (int)(((DateTime.Now - startTime).TotalSeconds / (double)i) * (countOfFiles - i));
-
                     if (showProgress)
+                    {
+                        int percentage = (int)((double)++i / (double)countOfFiles * 100);
+                        progress.PercentComplete = percentage <= 100 ? percentage : 100;
+                        progress.SecondsRemaining = (int)(((DateTime.Now - startTime).TotalSeconds / (double)i) * (countOfFiles - i));
+
                         WriteProgress(progress);
+                    }
 
                     if (!string.IsNullOrEmpty(item.ErrorMessage))
+                    {
                         WriteVerbose(item.ErrorMessage);
+                    }
 
                     if (passthru)
                     {
@@ -280,11 +314,13 @@ namespace Qopy
                     }
                 }
 
-                progress.RecordType = ProgressRecordType.Completed;
-                progress.PercentComplete = 100;
-                
                 if (showProgress)
+                {
+                    progress.RecordType = ProgressRecordType.Completed;
+                    progress.PercentComplete = 100;
+
                     WriteProgress(progress);
+                }
             }
         }
     }
@@ -300,17 +336,21 @@ namespace Qopy
         }
         private FileCopyResultsItem inputObject;
 
-        FileCopyResultsReport report = new FileCopyResultsReport();
+        private FileCopyResultsReport report = new FileCopyResultsReport();
 
         protected override void ProcessRecord()
         {
             report.TotalTime += inputObject.Time;
             report.FileCount++;
             
-            if (!inputObject.Match)
+            if (!inputObject.Match) 
+            {
                 report.FailedItemList.Add(inputObject);
+            }
             else
+            {
                 report.Bytes += inputObject.Size;
+            }
         }
 
         protected override void EndProcessing()
