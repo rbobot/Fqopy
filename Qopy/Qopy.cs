@@ -94,6 +94,13 @@ namespace Qopy
         }
         private bool showProgress;
 
+        [Parameter(Mandatory = false)]
+        public SwitchParameter PassThru
+        {
+            get { return passthru; }
+            set { passthru = value; }
+        }
+        private bool passthru = false;
 
         private IEnumerable<string> listOfFiles = null;
         private List<string> listofDestinationDirs = new List<string>();
@@ -248,7 +255,10 @@ namespace Qopy
                     if (!string.IsNullOrEmpty(item.ErrorMessage))
                         WriteVerbose(item.ErrorMessage);
 
-                    WriteObject(item);
+                    if (passthru)
+                    {
+                        WriteObject(item);
+                    }
                 }
 
                 progress.RecordType = ProgressRecordType.Completed;
