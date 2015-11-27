@@ -39,6 +39,9 @@
                 <command:parameter required="false" >
                     <maml:name>ShowProgress</maml:name>
                 </command:parameter>
+                <command:parameter required="false" >
+                    <maml:name>PassThru</maml:name>
+                </command:parameter>
             </command:syntaxItem>
         </command:syntax>
         <command:parameters>
@@ -82,6 +85,12 @@
                 <maml:name>ShowProgress</maml:name>
                 <maml:description>
                     <maml:para>Show a progress bar with time estimate.</maml:para>
+                </maml:description>
+            </command:parameter>
+            <command:parameter required="false" >
+                <maml:name>PassThru</maml:name>
+                <maml:description>
+                    <maml:para>Passes the copying result objects to the pipeline. By default, this cmdlet does not generate any output. Needed for Get-CopyResultsReport cmdlet.</maml:para>
                 </maml:description>
             </command:parameter>
         </command:parameters>
@@ -174,7 +183,7 @@
         <command:examples>
             <command:example>
                 <maml:title>-------------------------- EXAMPLE 1 --------------------------</maml:title>
-                <dev:code>PS C:\&gt; $report = Copy-Files C:\users\downloads D:\filearchive -Recurse | Get-CopyResultsReport</dev:code>
+                <dev:code>PS C:\&gt; $report = Copy-Files C:\users\downloads D:\filearchive -Recurse -PassThru | Get-CopyResultsReport</dev:code>
                 <dev:remarks>
                     <maml:para>Aggregates the output of Copy-Files into the &quot;report&quot; variable.</maml:para>
                 </dev:remarks>
