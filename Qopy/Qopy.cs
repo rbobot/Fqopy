@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Management.Automation;
 using Microsoft.PowerShell.Commands;
@@ -95,6 +96,14 @@ namespace Qopy
         private bool showProgress;
 
         [Parameter(Mandatory = false)]
+        public string List
+        {
+            get { return list; }
+            set { list = value; }
+        }
+        private string list = "";
+
+        [Parameter(Mandatory = false)]
         public SwitchParameter PassThru
         {
             get { return passthru; }
@@ -102,8 +111,8 @@ namespace Qopy
         }
         private bool passthru = false;
 
-        private IEnumerable<string> listOfFiles = null;
-        private List<string> listofDestinationDirs = new List<string>();
+        private List<string> listOfFiles	= new List<string>();
+        private List<string> listOfDestDirs = new List<string>();
         private int countOfFiles = 0;
         private Crc32 crc32 = new Crc32();
         
@@ -115,18 +124,13 @@ namespace Qopy
 
             try
             {
-                listOfFiles = Directory.EnumerateFiles(source, filter, searchOption);
-
-                List<string> destPathList = new List<string>();
-
-                foreach (string file in listOfFiles)
+                if (String.IsNullOrEmpty(list))
                 {
-                    countOfFiles++;
-
-                    string destinationPath = Path.GetDirectoryName(file.Replace(source, destination));
-
-                    if (!listofDestinationDirs.Contains(destinationPath))
-                        listofDestinationDirs.Add(destinationPath);
+                    listOfFiles = (Directory.EnumerateFiles(source, filter, searchOption)).ToList<string>();
+                }
+                else
+                {
+                    listOfFiles = (File.ReadAllLines(list)).Select(path => Path.GetFullPath(source + path)).ToList<string>();
                 }
             }
             catch (ArgumentException ex)
@@ -137,6 +141,17 @@ namespace Qopy
             { WriteError(new ErrorRecord(ex, "3", ErrorCategory.ReadError, source)); }
             catch (UnauthorizedAccessException ex)
             { WriteError(new ErrorRecord(ex, "4", ErrorCategory.PermissionDenied, source)); }
+
+            foreach (string file in listOfFiles)
+            {
+                countOfFiles++;
+
+                string destinationPath = Path.GetDirectoryName(file.Replace(source, destination));
+
+                if (!listOfDestDirs.Contains(destinationPath))
+                    listOfDestDirs.Add(destinationPath);
+            }
+
         }
 
         protected override void EndProcessing()
@@ -147,7 +162,7 @@ namespace Qopy
                 DateTime startTime = DateTime.Now;
                 int i = 0;
 
-                foreach (string dir in listofDestinationDirs)
+                foreach (string dir in listOfDestDirs)
                 {
                     try
                     {
@@ -157,9 +172,9 @@ namespace Qopy
                     catch (UnauthorizedAccessException ex)
                     { WriteVerbose(ex.Message); }
                     catch (PathTooLongException ex)
-                    { WriteVerbose(ex.Message); ; }
+                    { WriteVerbose(ex.Message); }
                     catch (ArgumentNullException ex)
-                    { WriteVerbose(ex.Message); ; }
+                    { WriteVerbose(ex.Message); }
                     catch (ArgumentException ex)
                     { WriteVerbose(ex.Message); }
                     catch (DirectoryNotFoundException ex)
@@ -200,7 +215,6 @@ namespace Qopy
 
                                 if (copyTheFile)
                                 {
-                                    
                                     sourceFs.Position = 0;
                                     dstFs.Position = 0;
                                     sourceFs.CopyTo(dstFs);     
@@ -218,23 +232,28 @@ namespace Qopy
                                 File.SetLastAccessTimeUtc(fullDestination, File.GetLastAccessTimeUtc(file));
                             }
                         }
+                        catch (FileNotFoundException ex)
+                        {
+                            ErrorRecord er = new ErrorRecord(ex, "5", ErrorCategory.ReadError, fullDestination);
+                            item.ErrorMessage = er.Exception.Message;
+                        }
                         catch (UnauthorizedAccessException ex)
-                        {   ErrorRecord er = new ErrorRecord(ex, "5", ErrorCategory.SecurityError, fullDestination);
+                        {   ErrorRecord er = new ErrorRecord(ex, "6", ErrorCategory.SecurityError, fullDestination);
                             item.ErrorMessage = er.Exception.Message;
                         }
                         catch (NotSupportedException ex)
                         {   
-                            ErrorRecord er = new ErrorRecord(ex, "5", ErrorCategory.InvalidOperation, sourceFs);
+                            ErrorRecord er = new ErrorRecord(ex, "7", ErrorCategory.InvalidOperation, sourceFs);
                             item.ErrorMessage = er.Exception.Message;
                         }
                         catch (ObjectDisposedException ex)
                         { 
-                            ErrorRecord er = new ErrorRecord(ex, "6", ErrorCategory.ResourceUnavailable, sourceFs);
+                            ErrorRecord er = new ErrorRecord(ex, "8", ErrorCategory.ResourceUnavailable, sourceFs);
                             item.ErrorMessage = er.Exception.Message;
                         }
                         catch (IOException ex)
                         { 
-                            ErrorRecord er = new ErrorRecord(ex, "7", ErrorCategory.WriteError, fullDestination);
+                            ErrorRecord er = new ErrorRecord(ex, "9", ErrorCategory.WriteError, fullDestination);
                             item.ErrorMessage = er.Exception.Message;  
                         }
 
