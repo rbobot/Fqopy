@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Management.Automation;
-using Microsoft.PowerShell.Commands;
-
 
 namespace Qopy
 {
@@ -64,52 +61,22 @@ namespace Qopy
         private string filter = "*";
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter Recurse
-        {
-            get { return recurse; }
-            set { recurse = value; }
-        }
-        private bool recurse;
+        public SwitchParameter Recurse { get; set; }
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter Overwrite
-        {
-            get { return overwrite; }
-            set { overwrite = value; }
-        }
-        private bool overwrite;
+        public SwitchParameter Overwrite { get; set; }
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter SetTime
-        {
-            get { return settime; }
-            set { settime = value; }
-        }
-        private bool settime;
+        public SwitchParameter SetTime { get; set; }
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter ShowProgress
-        {
-            get { return showProgress; }
-            set { showProgress = value; }
-        }
-        private bool showProgress;
+        public SwitchParameter ShowProgress { get; set; }
 
         [Parameter(Mandatory = false)]
-        public string List
-        {
-            get { return list; }
-            set { list = value; }
-        }
-        private string list = "";
+        public string List { get; set; }
 
         [Parameter(Mandatory = false)]
-        public SwitchParameter PassThru
-        {
-            get { return passthru; }
-            set { passthru = value; }
-        }
-        private bool passthru = false;
+        public SwitchParameter PassThru { get; set; }
 
         private List<string> listOfFiles	= new List<string>();
         private List<string> listOfDestDirs = new List<string>();
@@ -120,17 +87,17 @@ namespace Qopy
         protected override void BeginProcessing()
         {
             
-            SearchOption searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var searchOption = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             try
             {
-                if (String.IsNullOrEmpty(list))
+                if (String.IsNullOrEmpty(List))
                 {
                     listOfFiles = (Directory.EnumerateFiles(source, filter, searchOption)).ToList<string>();
                 }
                 else
                 {
-                    listOfFiles = (File.ReadAllLines(list)).Select(path => Path.GetFullPath(source + path)).ToList<string>();
+                    listOfFiles = (File.ReadAllLines(List)).Select(path => Path.GetFullPath(source + path)).ToList<string>();
                 }
             }
             catch (ArgumentException ex)
@@ -238,10 +205,12 @@ namespace Qopy
                                 {
                                     bool copyTheFile = false;
 
-                                    if (sourceFs.Length > 0 && (dstFs.Length == 0 || overwrite))
+                                    if (sourceFs.Length > 0 && (dstFs.Length == 0 || Overwrite))
+                                    {
                                         copyTheFile = true;
+                                    }
 
-                                    if (dstFs.Length > 0 && overwrite)
+                                    if (dstFs.Length > 0 && Overwrite)
                                     {
                                         dstFs.SetLength(0);
                                         dstFs.Flush();
@@ -260,7 +229,7 @@ namespace Qopy
                                     item.Size = dstFs.Length;
                                 }
 
-                                if (settime)
+                                if (SetTime)
                                 {
                                     File.SetCreationTimeUtc(fullDestination, File.GetCreationTimeUtc(file));
                                     File.SetLastWriteTimeUtc(fullDestination, File.GetLastWriteTimeUtc(file));
@@ -294,12 +263,11 @@ namespace Qopy
                         item.Match = item.SourceCRC == item.DestinationCRC;
                     }
 
-                    if (showProgress)
+                    if (ShowProgress)
                     {
                         int percentage = (int)((double)++i / (double)countOfFiles * 100);
                         progress.PercentComplete = percentage <= 100 ? percentage : 100;
                         progress.SecondsRemaining = (int)(((DateTime.Now - startTime).TotalSeconds / (double)i) * (countOfFiles - i));
-
                         WriteProgress(progress);
                     }
 
@@ -308,17 +276,16 @@ namespace Qopy
                         WriteVerbose(item.ErrorMessage);
                     }
 
-                    if (passthru)
+                    if (PassThru)
                     {
                         WriteObject(item);
                     }
                 }
 
-                if (showProgress)
+                if (ShowProgress)
                 {
                     progress.RecordType = ProgressRecordType.Completed;
                     progress.PercentComplete = 100;
-
                     WriteProgress(progress);
                 }
             }
