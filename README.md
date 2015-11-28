@@ -17,7 +17,7 @@ Two Cmdlets are exported.
 
 	SYNTAX
 		Copy-Files [-Source] <string> [-Destination] <string> [[-Filter] <string>]
-		[[-Recurse]] [[-SetTime]] [[-Overwrite]] [[-ShowProgress]]  [<CommonParameters>]
+		[[-Recurse]] [[-SetTime]] [[-Overwrite]] [[-ShowProgress]] [[-List]] [[-PassThru]] [<CommonParameters>]
 
 
 	NAME
@@ -84,6 +84,9 @@ Changes
 1.0.3
 ----
 * Added the SetTime switch to copy timestamp metadata. This increases copy time by as much as 300%.
+* Added PassThru switch
+* Added List parameter to copying files from text file with relastive paths:
+	Copy-Files C:\users\downloads D:\filearchive -Recurse -List C:\users\downloads\queue.txt
 
 1.0.2
 ----
@@ -107,7 +110,7 @@ Use
 ====
 **Requires Powershell v3.**
 
-[Binary Download](http://www.automatedops.com/downloads/Qopy1.0.2.zip)
+[Binary Download](https://github.com/rbobot/Qopy/releases/)
 
 1. Extract to `C:\Users\[username]\Documents\WindowsPowerShell\Modules` 
 1.  `Import-Module Qopy`
