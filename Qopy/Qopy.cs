@@ -117,17 +117,7 @@ namespace Qopy
                 WriteError(new ErrorRecord(ex, "4", ErrorCategory.PermissionDenied, source)); 
             }
 
-            foreach (string file in listOfFiles)
-            {
-                countOfFiles++;
-
-                string destinationPath = Path.GetDirectoryName(file.Replace(source, destination));
-
-                if (!listOfDestDirs.Contains(destinationPath))
-                {
-                    listOfDestDirs.Add(destinationPath);
-                }
-            }
+            listOfDestDirs = listOfFiles.Select(path => Path.GetDirectoryName(path.Replace(source, destination))).Distinct().ToList<string>();
         }
 
         protected override void EndProcessing()
@@ -265,7 +255,7 @@ namespace Qopy
 
                     if (ShowProgress)
                     {
-                        int percentage = (int)((double)++i / (double)countOfFiles * 100);
+                        int percentage = (int)((double)++i / (double)listOfFiles.Count() * 100);
                         progress.PercentComplete = percentage <= 100 ? percentage : 100;
                         progress.SecondsRemaining = (int)(((DateTime.Now - startTime).TotalSeconds / (double)i) * (countOfFiles - i));
                         WriteProgress(progress);
