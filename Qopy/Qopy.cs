@@ -177,7 +177,7 @@ namespace Qopy
 
                     if (!File.Exists(file))
                     {
-                        var er = new ErrorRecord(new Exception(String.Format("File not found: {0}", file)), "6", ErrorCategory.SecurityError, fullDestination);
+                        var er = new ErrorRecord(new Exception(String.Format("Could not find file: {0}", file)), "6", ErrorCategory.SecurityError, fullDestination);
                         item.ErrorMessage = er.Exception.Message;
                     }
                     else
