@@ -93,7 +93,13 @@ namespace Qopy
 			{
 				if ( String.IsNullOrEmpty( List ) )
 				{
-					listOfFiles = ( Directory.EnumerateFiles( source, filter, searchOption ) ).ToList<string>();
+					using ( FileSystemEnumerator fse = new FileSystemEnumerator( source, filter, Recurse ) )
+					{
+						foreach ( FileInfo fi in fse.Matches() )
+						{
+							listOfFiles.Add( fi.FullName );
+						}
+					}
 				}
 				else
 				{
