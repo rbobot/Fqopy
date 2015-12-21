@@ -42,7 +42,7 @@ namespace Qopy
 			get { return source; }
 			set { source = value.TrimEnd( new char[] { '\\', '/' } ); }
 		}
-		private string source;
+		string source;
 
 		[Parameter( Mandatory = true, Position = 1 )]
 		public string Destination
@@ -50,7 +50,7 @@ namespace Qopy
 			get { return destination; }
 			set { destination = value.TrimEnd( new char[] { '\\', '/' } ); }
 		}
-		private string destination;
+		string destination;
 
 		[Parameter( Mandatory = false, Position = 2 )]
 		public string Filter
@@ -58,7 +58,7 @@ namespace Qopy
 			get { return filter; }
 			set { filter = value; }
 		}
-		private string filter = "*";
+		string filter = "*";
 
 		[Parameter( Mandatory = false )]
 		public SwitchParameter Recurse { get; set; }
@@ -78,22 +78,19 @@ namespace Qopy
 		[Parameter( Mandatory = false )]
 		public SwitchParameter PassThru { get; set; }
 
-		private List<string> listOfFiles    = new List<string>();
-		private List<string> listOfDestDirs = new List<string>();
-		private int countOfFiles = 0;
-		private Crc32 crc32 = new Crc32();
+		List<string> listOfFiles    = new List<string>();
+		List<string> listOfDestDirs = new List<string>();
+		int countOfFiles = 0;
+		Crc32 crc32 = new Crc32();
 
 
 		protected override void BeginProcessing()
 		{
-
-			var searchOption = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-
 			try
 			{
-				if ( String.IsNullOrEmpty( List ) )
+				if ( string.IsNullOrEmpty( List ) )
 				{
-					using ( FileSystemEnumerator fse = new FileSystemEnumerator( source, filter, Recurse ) )
+					using ( var fse = new FileSystemEnumerator( source, filter, Recurse ) )
 					{
 						foreach ( FileInfo fi in fse.Matches() )
 						{
@@ -103,7 +100,7 @@ namespace Qopy
 				}
 				else
 				{
-					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( source + path ) ).ToList<string>();
+					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( source + path ) ).ToList();
 				}
 			}
 			catch ( ArgumentException ex )
@@ -123,7 +120,7 @@ namespace Qopy
 				WriteError( new ErrorRecord( ex, "4", ErrorCategory.PermissionDenied, source ) );
 			}
 
-			listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( source, destination ) ) ).Distinct().ToList<string>();
+			listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( source, destination ) ) ).Distinct().ToList();
 		}
 
 		protected override void EndProcessing()
@@ -131,7 +128,7 @@ namespace Qopy
 			if ( listOfFiles != null )
 			{
 				int i = 0;
-				var progress = new ProgressRecord( 0, String.Format( "Copy from {0} to {1}", source, destination ), "Copying" );
+				var progress = new ProgressRecord( 0, string.Format( "Copy from {0} to {1}", source, destination ), "Copying" );
 				var startTime = DateTime.Now;
 
 				foreach ( string dir in listOfDestDirs )
@@ -262,9 +259,9 @@ namespace Qopy
 
 					if ( ShowProgress )
 					{
-						int percentage = (int) ( (double) ++i / (double) listOfFiles.Count() * 100 );
+						int percentage = (int) ( (double) ++i / listOfFiles.Count() * 100 );
 						progress.PercentComplete = percentage <= 100 ? percentage : 100;
-						progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / (double) i ) * ( countOfFiles - i ) );
+						progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / i ) * ( countOfFiles - i ) );
 						WriteProgress( progress );
 					}
 
@@ -298,9 +295,9 @@ namespace Qopy
 			get { return inputObject; }
 			set { inputObject = value; }
 		}
-		private FileCopyResultsItem inputObject;
+		FileCopyResultsItem inputObject;
 
-		private FileCopyResultsReport report = new FileCopyResultsReport();
+		FileCopyResultsReport report = new FileCopyResultsReport();
 
 		protected override void ProcessRecord()
 		{

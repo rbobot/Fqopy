@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 
 /*
@@ -9,15 +8,15 @@ using System.Security.Cryptography;
 
 namespace Qopy
 {
-	class Crc32 : HashAlgorithm
+	sealed class Crc32 : HashAlgorithm
 	{
-		public const UInt32 DefaultPolynomial = 0xedb88320;
-		public const UInt32 DefaultSeed = 0xffffffff;
+		public const uint DefaultPolynomial = 0xedb88320;
+		public const uint DefaultSeed = 0xffffffff;
 
-		private UInt32 hash;
-		private UInt32 seed;
-		private UInt32[] table;
-		private static UInt32[] defaultTable;
+		uint hash;
+		uint seed;
+		uint[] table;
+		static uint[] defaultTable;
 
 		public Crc32()
 		{
@@ -26,7 +25,7 @@ namespace Qopy
 			Initialize();
 		}
 
-		public Crc32( UInt32 polynomial, UInt32 seed )
+		public Crc32( uint polynomial, uint seed )
 		{
 			table = InitializeTable( polynomial );
 			this.seed = seed;
@@ -38,15 +37,15 @@ namespace Qopy
 			hash = seed;
 		}
 
-		protected override void HashCore( byte[] buffer, int start, int length )
+		protected override void HashCore( byte[] array, int ibStart, int cbSize )
 		{
-			hash = CalculateHash( table, hash, buffer, start, length );
+			hash = CalculateHash( table, hash, array, ibStart, cbSize );
 		}
 
 		protected override byte[] HashFinal()
 		{
 			byte[] hashBuffer = UInt32ToBigEndianBytes( ~hash );
-			this.HashValue = hashBuffer;
+			HashValue = hashBuffer;
 			return hashBuffer;
 		}
 
@@ -55,30 +54,30 @@ namespace Qopy
 			get { return 32; }
 		}
 
-		public static UInt32 Compute( byte[] buffer )
+		public static uint Compute( byte[] buffer )
 		{
 			return ~CalculateHash( InitializeTable( DefaultPolynomial ), DefaultSeed, buffer, 0, buffer.Length );
 		}
 
-		public static UInt32 Compute( UInt32 seed, byte[] buffer )
+		public static uint Compute( uint seed, byte[] buffer )
 		{
 			return ~CalculateHash( InitializeTable( DefaultPolynomial ), seed, buffer, 0, buffer.Length );
 		}
 
-		public static UInt32 Compute( UInt32 polynomial, UInt32 seed, byte[] buffer )
+		public static uint Compute( uint polynomial, uint seed, byte[] buffer )
 		{
 			return ~CalculateHash( InitializeTable( polynomial ), seed, buffer, 0, buffer.Length );
 		}
 
-		private static UInt32[] InitializeTable( UInt32 polynomial )
+		static uint[] InitializeTable( uint polynomial )
 		{
 			if ( polynomial == DefaultPolynomial && defaultTable != null )
 				return defaultTable;
 
-			UInt32[] createTable = new UInt32[ 256 ];
+			uint[] createTable = new uint[ 256 ];
 			for ( int i = 0; i < 256; i++ )
 			{
-				UInt32 entry = (UInt32) i;
+				var entry = (uint) i;
 				for ( int j = 0; j < 8; j++ )
 					if ( ( entry & 1 ) == 1 )
 						entry = ( entry >> 1 ) ^ polynomial;
@@ -93,9 +92,9 @@ namespace Qopy
 			return createTable;
 		}
 
-		private static UInt32 CalculateHash( UInt32[] table, UInt32 seed, byte[] buffer, int start, int size )
+		static uint CalculateHash( uint[] table, uint seed, byte[] buffer, int start, int size )
 		{
-			UInt32 crc = seed;
+			uint crc = seed;
 			for ( int i = start; i < size; i++ )
 				unchecked
 				{
@@ -104,14 +103,14 @@ namespace Qopy
 			return crc;
 		}
 
-		private byte[] UInt32ToBigEndianBytes( UInt32 x )
+		byte[] UInt32ToBigEndianBytes( uint x )
 		{
 			return new byte[] {
-			(byte)((x >> 24) & 0xff),
-			(byte)((x >> 16) & 0xff),
-			(byte)((x >> 8) & 0xff),
-			(byte)(x & 0xff)
-		};
+				(byte)((x >> 24) & 0xff),
+				(byte)((x >> 16) & 0xff),
+				(byte)((x >> 8) & 0xff),
+				(byte)(x & 0xff)
+			};
 		}
 	}
 }

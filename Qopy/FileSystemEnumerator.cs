@@ -26,7 +26,7 @@ namespace Qopy
 		/// Structure that maps to WIN32_FIND_DATA
 		/// </summary>
 		[StructLayout( LayoutKind.Sequential, CharSet = CharSet.Auto )]
-		internal sealed class FindData
+		sealed class FindData
 		{
 			public int fileAttributes;
 			public int creationTime_lowDateTime;
@@ -40,15 +40,15 @@ namespace Qopy
 			public int dwReserved0;
 			public int dwReserved1;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-			public String fileName;
+			public string fileName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
-			public String alternateFileName;
+			public string alternateFileName;
 		}
 
 		/// <summary>
 		/// SafeHandle class for holding find handles
 		/// </summary>
-		internal sealed class SafeFindHandle : Microsoft.Win32.SafeHandles.SafeHandleMinusOneIsInvalid
+		sealed class SafeFindHandle : Microsoft.Win32.SafeHandles.SafeHandleMinusOneIsInvalid
 		{
 			/// <summary>
 			/// Constructor
@@ -72,11 +72,11 @@ namespace Qopy
 		/// <summary>
 		/// Wrapper for P/Invoke methods used by FileSystemEnumerator
 		/// </summary>
-		[SecurityPermissionAttribute( SecurityAction.Assert, UnmanagedCode = true )]
-		internal static class SafeNativeMethods
+		[SecurityPermission( SecurityAction.Assert, UnmanagedCode = true )]
+		static class SafeNativeMethods
 		{
 			[DllImport( "Kernel32.dll", CharSet = CharSet.Auto )]
-			public static extern SafeFindHandle FindFirstFile( String fileName, [In, Out] FindData findFileData );
+			public static extern SafeFindHandle FindFirstFile( string fileName, [In, Out] FindData findFileData );
 
 			[DllImport( "kernel32", CharSet = CharSet.Auto )]
 			[return: MarshalAs( UnmanagedType.Bool )]
@@ -98,7 +98,7 @@ namespace Qopy
 		/// <summary>
 		/// Information that's kept in our stack for simulated recursion
 		/// </summary>
-		private struct SearchInfo
+		struct SearchInfo
 		{
 			/// <summary>
 			/// Find handle returned by FindFirstFile
@@ -127,22 +127,22 @@ namespace Qopy
 		/// to allow Dispose to close any open find handles if the object is disposed
 		/// before the enumeration is completed.
 		/// </summary>
-		private Stack<SearchInfo> m_scopes;
+		Stack<SearchInfo> m_scopes;
 
 		/// <summary>
 		/// Array of paths to be searched.
 		/// </summary>
-		private string[] m_paths;
+		string[] m_paths;
 
 		/// <summary>
 		/// Array of regular expressions that will detect matching files.
 		/// </summary>
-		private List<Regex> m_fileSpecs;
+		List<Regex> m_fileSpecs;
 
 		/// <summary>
 		/// If true, sub-directories are searched.
 		/// </summary>
-		private bool m_includeSubDirs;
+		bool m_includeSubDirs;
 
 		#region IDisposable implementation
 
@@ -187,17 +187,9 @@ namespace Qopy
 			m_fileSpecs = new List<Regex>( specs.Length );
 			foreach ( string spec in specs )
 			{
-
 				// trim whitespace off file spec and convert Win32 wildcards to regular expressions
-				string pattern = spec
-				  .Trim()
-				  .Replace( ".", @"\." )
-				  .Replace( "*", @".*" )
-				  .Replace( "?", @".?" )
-				  ;
-				m_fileSpecs.Add(
-				  new Regex( "^" + pattern + "$", RegexOptions.IgnoreCase )
-				  );
+				var pattern = spec.Trim().Replace( ".", @"\." ).Replace( "*", @".*" ).Replace( "?", @".?" );
+				m_fileSpecs.Add( new Regex( "^" + pattern + "$", RegexOptions.IgnoreCase ) );
 			}
 		}
 
@@ -221,8 +213,8 @@ namespace Qopy
 				new FileIOPermission( FileIOPermissionAccess.PathDiscovery, Path.Combine( path, "." ) ).Demand();
 
 				// now that security is checked, go read the directory
-				Win32.FindData findData = new Win32.FindData();
-				Win32.SafeFindHandle handle = Win32.SafeNativeMethods.FindFirstFile( Path.Combine( path, "*" ), findData );
+				var findData = new Win32.FindData();
+				var handle = Win32.SafeNativeMethods.FindFirstFile( Path.Combine( path, "*" ), findData );
 				m_scopes.Push( new SearchInfo( handle, path ) );
 				bool restart = false;
 
