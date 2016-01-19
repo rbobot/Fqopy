@@ -22,27 +22,22 @@ namespace fqopy
     public class CopyResultsReport : Cmdlet
     {
         [Parameter( Mandatory = true, ValueFromPipeline = true )]
-        public FileCopyResultsItem InputObject
-        {
-            get { return inputObject; }
-            set { inputObject = value; }
-        }
-        FileCopyResultsItem inputObject;
+        public FileCopyResultsItem InputObject { get; set; }
 
         FileCopyResultsReport report = new FileCopyResultsReport();
 
         protected override void ProcessRecord()
         {
-            report.TotalTime += inputObject.Time;
+            report.TotalTime += InputObject.Time;
             report.FileCount++;
 
-            if ( !inputObject.Match )
+            if ( !InputObject.Match )
             {
-                report.FailedItemList.Add( inputObject );
+                report.FailedItemList.Add( InputObject );
             }
             else
             {
-                report.Bytes += inputObject.Size;
+                report.Bytes += InputObject.Size;
             }
         }
 
