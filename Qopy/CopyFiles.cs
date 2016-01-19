@@ -78,7 +78,6 @@ namespace fqopy
 				{
 					var searchOption = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 					listOfFiles = Directory.GetFiles( Source, Filter, searchOption ).ToList();
-
 				}
 				else
 				{
@@ -102,7 +101,11 @@ namespace fqopy
 				WriteError( new ErrorRecord( ex, "4", ErrorCategory.PermissionDenied, Source ) );
 			}
 
-			listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct().ToList();
+			if ( listOfFiles != null )
+			{
+				listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct().ToList();
+				countOfFiles = listOfFiles.Count();
+			}
 		}
 
 		protected override void EndProcessing()
