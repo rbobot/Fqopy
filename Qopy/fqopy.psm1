@@ -1,7 +1,7 @@
 ﻿# -----------------------------------------------------------------------
 # Cmdlet aliases
 # -----------------------------------------------------------------------
-Set-Alias Qopy			Copy-Files 	-Description "Qopy alias"
-Set-Alias QopyReport	Get-CopyResultsReport 	-Description "Qopy alias"
+Set-Alias fqopy			Copy-Files 	-Description "fqopy alias"
+Set-Alias fqopyReport	Get-CopyResultsReport 	-Description "fqopy alias"
 
 Export-ModuleMember -Alias * -Function * -Cmdlet *

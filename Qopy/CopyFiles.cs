@@ -53,7 +53,7 @@ namespace fqopy
 		public SwitchParameter Overwrite { get; set; }
 
 		[Parameter( Mandatory = false )]
-		public SwitchParameter SetTime { get; set; }
+		public SwitchParameter Fast { get; set; }
 
 		[Parameter( Mandatory = false )]
 		public SwitchParameter ShowProgress { get; set; }
@@ -209,7 +209,7 @@ namespace fqopy
 									item.Size = dstFs.Length;
 								}
 
-								if ( SetTime )
+								if ( !Fast )
 								{
 									File.SetCreationTimeUtc( fullDestination, File.GetCreationTimeUtc( file ) );
 									File.SetLastWriteTimeUtc( fullDestination, File.GetLastWriteTimeUtc( file ) );
