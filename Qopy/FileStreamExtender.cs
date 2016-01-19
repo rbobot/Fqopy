@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Qopy
+namespace fqopy
 {
 	public static class FileStreamExtender
 	{
