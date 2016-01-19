@@ -51,7 +51,6 @@
     <Compile Include="CopyResultsReport.cs" />
     <Compile Include="Crc32.cs" />
     <Compile Include="FileStreamExtender.cs" />
-    <Compile Include="FileSystemEnumerator.cs" />
     <Compile Include="CopyFiles.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

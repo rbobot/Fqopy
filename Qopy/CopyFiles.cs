@@ -76,37 +76,33 @@ namespace fqopy
 			{
 				if ( string.IsNullOrEmpty( List ) )
 				{
-					using ( var fse = new FileSystemEnumerator( source, filter, Recurse ) )
-					{
-						foreach ( FileInfo fi in fse.Matches() )
-						{
-							listOfFiles.Add( fi.FullName );
-						}
-					}
+					var searchOption = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+					listOfFiles = Directory.GetFiles( Source, Filter, searchOption ).ToList();
+
 				}
 				else
 				{
-					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( source + path ) ).ToList();
+					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( Source + path ) ).ToList();
 				}
 			}
 			catch ( ArgumentException ex )
 			{
-				WriteError( new ErrorRecord( ex, "1", ErrorCategory.InvalidArgument, source ) );
+				WriteError( new ErrorRecord( ex, "1", ErrorCategory.InvalidArgument, Source ) );
 			}
 			catch ( DirectoryNotFoundException ex )
 			{
-				WriteError( new ErrorRecord( ex, "2", ErrorCategory.ObjectNotFound, source ) );
+				WriteError( new ErrorRecord( ex, "2", ErrorCategory.ObjectNotFound, Source ) );
 			}
 			catch ( IOException ex )
 			{
-				WriteError( new ErrorRecord( ex, "3", ErrorCategory.ReadError, source ) );
+				WriteError( new ErrorRecord( ex, "3", ErrorCategory.ReadError, Source ) );
 			}
 			catch ( UnauthorizedAccessException ex )
 			{
-				WriteError( new ErrorRecord( ex, "4", ErrorCategory.PermissionDenied, source ) );
+				WriteError( new ErrorRecord( ex, "4", ErrorCategory.PermissionDenied, Source ) );
 			}
 
-			listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( source, destination ) ) ).Distinct().ToList();
+			listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct().ToList();
 		}
 
 		protected override void EndProcessing()
@@ -114,7 +110,7 @@ namespace fqopy
 			if ( listOfFiles != null )
 			{
 				int i = 0;
-				var progress = new ProgressRecord( 0, string.Format( "Copy from {0} to {1}", source, destination ), "Copying" );
+				var progress = new ProgressRecord( 0, string.Format( "Copy from {0} to {1}", Source, Destination ), "Copying" );
 				var startTime = DateTime.Now;
 
 				foreach ( string dir in listOfDestDirs )
@@ -158,7 +154,7 @@ namespace fqopy
 
 				foreach ( string file in listOfFiles )
 				{
-					string fullDestination = file.Replace( source, destination );
+					string fullDestination = file.Replace( Source, Destination );
 
 					var item = new FileCopyResultsItem() { Source = file, Destination = fullDestination };
 
