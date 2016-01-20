@@ -45,8 +45,8 @@ namespace fqopy
         [Parameter( Mandatory = false )]
         public SwitchParameter PassThru { get; set; }
 
-        List<string> listToCopy     = new List<string>();
-        List<string> listToRemove   = new List<string>();
+        List<string> filesToCopy     = new List<string>();
+        List<string> filesToRemove   = new List<string>();
         List<string> dirsToCreate = new List<string>();
         List<string> dirsToRemove = new List<string>();
 
@@ -84,11 +84,11 @@ namespace fqopy
             if ( sourceList.SequenceEqual( destinList, myFileCompare ) != true )
             {
                 // The following files are in source but not destination.
-                listToCopy = ( from file in sourceList
+                filesToCopy = ( from file in sourceList
                                    select file ).Except( destinList, myFileCompare )
                                                 .Select( file => file.FullName).ToList();
                 // The following files are in destination but not source.
-                listToRemove = ( from file in destinList
+                filesToRemove = ( from file in destinList
                                      select file ).Except( sourceList, myFileCompare )
                                                   .Select( file => file.FullName ).ToList();
 
@@ -104,35 +104,44 @@ namespace fqopy
                 dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
                                              .Except( listOfSourceDirs ).ToList();
 
-                WriteVerbose( "dirs to create: " );
-                foreach ( var dir in dirsToCreate )
+                if ( dirsToCreate.Count != 0 )
                 {
-                    WriteVerbose( dir );
+                    WriteVerbose( "dirs to create: " );
+                    foreach ( var dir in dirsToCreate )
+                    {
+                        WriteVerbose( dir );
+                    }
                 }
-
-                WriteVerbose( "dirs to remove: " );
-                foreach ( var dir in dirsToRemove )
+                if ( dirsToRemove.Count != 0 )
                 {
-                    WriteVerbose( dir );
+                    WriteVerbose( "dirs to remove: " );
+                    foreach ( var dir in dirsToRemove )
+                    {
+                        WriteVerbose( dir );
+                    }
                 }
-
-                WriteVerbose( "files to copy: " );
-                foreach ( var file in listToCopy )
+                if ( filesToCopy.Count != 0 )
                 {
-                    WriteVerbose( file );
+                    WriteVerbose( "files to copy: " );
+                    foreach ( var file in filesToCopy )
+                    {
+                        WriteVerbose( file );
+                    }
                 }
-
-                WriteVerbose( "files to remove: " );
-                foreach ( var file in listToRemove )
+                if ( filesToRemove.Count != 0 )
                 {
-                    WriteVerbose( file );
+                    WriteVerbose( "files to remove: " );
+                    foreach ( var file in filesToRemove )
+                    {
+                        WriteVerbose( file );
+                    }
                 }
             }
         }
 
         protected override void EndProcessing()
         {
-            if ( dirsToCreate != null )
+            if ( dirsToCreate.Count != 0 )
             {
                 foreach ( string dir in dirsToCreate )
                 {
@@ -143,7 +152,7 @@ namespace fqopy
                 }
             }
 
-            if ( dirsToRemove != null )
+            if ( dirsToRemove.Count != 0 )
             {
                 foreach ( string dir in dirsToRemove )
                 {
@@ -154,7 +163,18 @@ namespace fqopy
                 }
             }
 
-            foreach ( string file in listToCopy )
+            if ( filesToRemove.Count != 0 )
+            {
+                foreach ( string file in filesToRemove )
+                {
+                    if ( File.Exists( file ) )
+                    {
+                        File.Delete( file );
+                    }
+                }
+            }
+
+            foreach ( string file in filesToCopy )
             {
                 string fullDestination = file.Replace( Source, Destination );
                 var item = new FileCopyResultsItem() { Source = file, Destination = fullDestination };
