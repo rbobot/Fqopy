@@ -45,10 +45,10 @@ namespace fqopy
         [Parameter( Mandatory = false )]
         public SwitchParameter PassThru { get; set; }
 
-        List<string> filesToCopy     = new List<string>();
-        List<string> filesToRemove   = new List<string>();
-        List<string> dirsToCreate = new List<string>();
-        List<string> dirsToRemove = new List<string>();
+        IEnumerable<string> filesToCopy     = new List<string>();
+        IEnumerable<string> filesToRemove   = new List<string>();
+        IEnumerable<string> dirsToCreate = new List<string>();
+        IEnumerable<string> dirsToRemove = new List<string>();
 
         int countOfFiles = 0;
         Crc32 crc32 = new Crc32();
@@ -86,11 +86,11 @@ namespace fqopy
                 // The following files are in source but not destination.
                 filesToCopy = ( from file in sourceList
                                    select file ).Except( destinList, myFileCompare )
-                                                .Select( file => file.FullName).ToList();
+                                                .Select( file => file.FullName);
                 // The following files are in destination but not source.
                 filesToRemove = ( from file in destinList
                                      select file ).Except( sourceList, myFileCompare )
-                                                  .Select( file => file.FullName ).ToList();
+                                                  .Select( file => file.FullName );
 
                 IEnumerable<string> listOfSourceDirs = sourceList.Select( path => Path.GetDirectoryName( path.FullName ) )
                                                                  .Distinct();
@@ -99,12 +99,12 @@ namespace fqopy
                                                                .Distinct();
 
                 dirsToCreate = listOfSourceDirs.Select( path =>  path.Replace( Source, Destination ) )
-                                               .Except( listOfDestDirs ).ToList();
+                                               .Except( listOfDestDirs );
 
                 dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
-                                             .Except( listOfSourceDirs ).ToList();
+                                             .Except( listOfSourceDirs );
 
-                if ( dirsToCreate.Count != 0 )
+                if ( dirsToCreate.Count() != 0 )
                 {
                     WriteVerbose( "dirs to create: " );
                     foreach ( var dir in dirsToCreate )
@@ -112,7 +112,7 @@ namespace fqopy
                         WriteVerbose( dir );
                     }
                 }
-                if ( dirsToRemove.Count != 0 )
+                if ( dirsToRemove.Count() != 0 )
                 {
                     WriteVerbose( "dirs to remove: " );
                     foreach ( var dir in dirsToRemove )
@@ -120,7 +120,7 @@ namespace fqopy
                         WriteVerbose( dir );
                     }
                 }
-                if ( filesToCopy.Count != 0 )
+                if ( filesToCopy.Count() != 0 )
                 {
                     WriteVerbose( "files to copy: " );
                     foreach ( var file in filesToCopy )
@@ -128,7 +128,7 @@ namespace fqopy
                         WriteVerbose( file );
                     }
                 }
-                if ( filesToRemove.Count != 0 )
+                if ( filesToRemove.Count() != 0 )
                 {
                     WriteVerbose( "files to remove: " );
                     foreach ( var file in filesToRemove )
@@ -141,7 +141,7 @@ namespace fqopy
 
         protected override void EndProcessing()
         {
-            if ( dirsToCreate.Count != 0 )
+            if ( dirsToCreate.Count() != 0 )
             {
                 foreach ( string dir in dirsToCreate )
                 {
@@ -152,7 +152,7 @@ namespace fqopy
                 }
             }
 
-            if ( dirsToRemove.Count != 0 )
+            if ( dirsToRemove.Count() != 0 )
             {
                 foreach ( string dir in dirsToRemove )
                 {
@@ -163,7 +163,7 @@ namespace fqopy
                 }
             }
 
-            if ( filesToRemove.Count != 0 )
+            if ( filesToRemove.Count() != 0 )
             {
                 foreach ( string file in filesToRemove )
                 {
