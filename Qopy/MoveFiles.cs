@@ -6,19 +6,19 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-    public class FileMoveResultsItem
-    {
-        public string Source;
-        public string Destination;
-        public long Size;
-        public TimeSpan Time;
-        public string SourceCRC;
-        public string DestinationCRC;
-        public bool Match = false;
-        public string ErrorMessage = string.Empty;
-    }
+	public class FileMoveResultsItem
+	{
+		public string Source;
+		public string Destination;
+		public long Size;
+		public TimeSpan Time;
+		public string SourceCRC;
+		public string DestinationCRC;
+		public bool Match = false;
+		public string ErrorMessage = string.Empty;
+	}
 
-    [Cmdlet( VerbsCommon.Move, "Files" )]
+	[Cmdlet( VerbsCommon.Move, "Files" )]
 	[CmdletBinding]
 	public class MoveFiles : Cmdlet
 	{
@@ -125,7 +125,7 @@ namespace fqopy
 							Directory.CreateDirectory( dir );
 						}
 					}
-                    catch ( UnauthorizedAccessException ex )
+					catch ( UnauthorizedAccessException ex )
 					{
 						WriteVerbose( ex.Message );
 					}
@@ -153,9 +153,9 @@ namespace fqopy
 					{
 						WriteVerbose( ex.Message );
 					}
-                }
+				}
 
-                foreach ( string file in listOfFiles )
+				foreach ( string file in listOfFiles )
 				{
 					string fullDestination = file.Replace( Source, Destination );
 
@@ -236,46 +236,46 @@ namespace fqopy
 								item.ErrorMessage = er.Exception.Message;
 							}
 						}
-                        try
-                        {
-                            File.Delete( file );
-                            string parentDir = Path.GetDirectoryName( file );
-                            string[] dirContent = Directory.GetFiles( parentDir, "*.*" );
-                            if ( dirContent.Length == 0)
-                            {
-                                Directory.Delete( parentDir );
-                            }
-                        }
-                        catch ( ArgumentNullException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( ArgumentException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( DirectoryNotFoundException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( NotSupportedException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( PathTooLongException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( IOException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
-                        catch ( UnauthorizedAccessException ex )
-                        {
-                            WriteVerbose( ex.Message );
-                        }
+						try
+						{
+							File.Delete( file );
+							string parentDir = Path.GetDirectoryName( file );
+							string[] dirContent = Directory.GetFiles( parentDir, "*.*" );
+							if ( dirContent.Length == 0)
+							{
+								Directory.Delete( parentDir );
+							}
+						}
+						catch ( ArgumentNullException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( ArgumentException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( DirectoryNotFoundException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( NotSupportedException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( PathTooLongException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( IOException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+						catch ( UnauthorizedAccessException ex )
+						{
+							WriteVerbose( ex.Message );
+						}
 
-                        item.Time = DateTime.Now - start;
+						item.Time = DateTime.Now - start;
 						item.Match = item.SourceCRC == item.DestinationCRC;
 					}
 
