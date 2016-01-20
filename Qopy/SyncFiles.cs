@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -51,7 +52,6 @@ namespace fqopy
         IEnumerable<string> dirsToRemove = new List<string>();
 
         int countOfFiles = 0;
-        Crc32 crc32 = new Crc32();
 
         protected override void BeginProcessing()
         {
@@ -147,7 +147,38 @@ namespace fqopy
                 {
                     if ( !Directory.Exists( dir ) )
                     {
-                        Directory.CreateDirectory( dir );
+                        try
+                        {
+                            Directory.CreateDirectory( dir );
+                        }
+                        catch ( UnauthorizedAccessException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( PathTooLongException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentNullException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( DirectoryNotFoundException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( NotSupportedException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( IOException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
                     }
                 }
             }
@@ -158,7 +189,38 @@ namespace fqopy
                 {
                     if ( Directory.Exists( dir ) )
                     {
-                        Directory.Delete( dir, true );
+                        try
+                        {
+                            Directory.Delete( dir, true );
+                        }
+                        catch ( UnauthorizedAccessException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( PathTooLongException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentNullException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( DirectoryNotFoundException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( NotSupportedException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( IOException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
                     }
                 }
             }
@@ -174,48 +236,31 @@ namespace fqopy
                 }
             }
 
-            foreach ( string file in filesToCopy )
+            int i = 0;
+            var progress = new ProgressRecord( 0, string.Format( "Sync {0} with {1}", Source, Destination ), "Syncing" );
+            var startTime = DateTime.Now;
+
+            foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy ) )
             {
-                string fullDestination = file.Replace( Source, Destination );
-                var item = new FileCopyResultsItem() { Source = file, Destination = fullDestination };
-
-                using ( FileStream sourceFs = File.Open( file, FileMode.Open, FileAccess.Read, FileShare.Read ) )
+                if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
                 {
-                    foreach ( byte b in crc32.ComputeHash( sourceFs ) )
-                    {
-                        item.SourceCRC += b.ToString( "x2" ).ToLower();
-                    }
+                    WriteVerbose( item.ErrorMessage );
+                }
 
-                    using ( FileStream dstFs = File.Open( fullDestination, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None ) )
-                    {
-                        bool copyTheFile = false;
+                if ( PassThru )
+                {
+                    WriteObject( item );
+                }
 
-                        if ( sourceFs.Length > 0 && dstFs.Length == 0 )
-                        {
-                            copyTheFile = true;
-                        }
-
-                        if ( dstFs.Length > 0 )
-                        {
-                            dstFs.SetLength( 0 );
-                            dstFs.Flush();
-                            copyTheFile = true;
-                        }
-
-                        if ( copyTheFile )
-                        {
-                            sourceFs.Position = 0;
-                            dstFs.Position = 0;
-                            sourceFs.CopyTo( dstFs );
-                        }
-
-                        dstFs.Position = 0;
-                        foreach ( byte b in crc32.ComputeHash( dstFs ) )
-                            item.DestinationCRC += b.ToString( "x2" ).ToLower();
-                        item.Size = dstFs.Length;
-                    }
+                if ( ShowProgress )
+                {
+                    int percentage = (int) ( (double) ++i / filesToCopy.Count() * 100 );
+                    progress.PercentComplete = percentage <= 100 ? percentage : 100;
+                    progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / i ) * ( countOfFiles - i ) );
+                    WriteProgress( progress );
                 }
             }
+
         }
     }
 
