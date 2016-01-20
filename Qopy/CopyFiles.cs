@@ -64,8 +64,8 @@ namespace fqopy
 		[Parameter( Mandatory = false )]
 		public SwitchParameter PassThru { get; set; }
 
-		List<string> listOfFiles    = new List<string>();
-		List<string> listOfDestDirs = new List<string>();
+		IEnumerable<string> listOfFiles    = new List<string>();
+		IEnumerable<string> listOfDestDirs = new List<string>();
 		int countOfFiles = 0;
 		Crc32 crc32 = new Crc32();
 
@@ -76,12 +76,12 @@ namespace fqopy
 			{
 				if ( string.IsNullOrEmpty( List ) )
 				{
-					var searchOption = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-					listOfFiles = Directory.GetFiles( Source, Filter, searchOption ).ToList();
+					var so = Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+					listOfFiles = Directory.GetFiles( Source, Filter, so );
 				}
 				else
 				{
-					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( Source + path ) ).ToList();
+					listOfFiles = ( File.ReadAllLines( List ) ).Select( path => Path.GetFullPath( Source + path ) );
 				}
 			}
 			catch ( ArgumentException ex )
@@ -103,7 +103,7 @@ namespace fqopy
 
 			if ( listOfFiles != null )
 			{
-				listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct().ToList();
+				listOfDestDirs = listOfFiles.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct();
 				countOfFiles = listOfFiles.Count();
 			}
 		}
@@ -125,7 +125,7 @@ namespace fqopy
 							Directory.CreateDirectory( dir );
 						}
 					}
-                    catch ( UnauthorizedAccessException ex )
+					catch ( UnauthorizedAccessException ex )
 					{
 						WriteVerbose( ex.Message );
 					}
@@ -153,9 +153,9 @@ namespace fqopy
 					{
 						WriteVerbose( ex.Message );
 					}
-                }
+				}
 
-                foreach ( string file in listOfFiles )
+				foreach ( string file in listOfFiles )
 				{
 					string fullDestination = file.Replace( Source, Destination );
 
