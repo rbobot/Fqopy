@@ -126,23 +126,13 @@
 		<command:examples>
 			<command:example>
 				<maml:title>-------------------------- EXAMPLE 1 --------------------------</maml:title>
-				<maml:introduction>
-					<maml:para>
-					</maml:para>
-				</maml:introduction>
 				<dev:code>PS C:\&gt; Copy-Files C:\users\downloads D:\filearchive -Recurse</dev:code>
 				<dev:remarks>
 					<maml:para>Copy all file and files in all sub-directories of &quot;C:\users\downloads&quot; to &quot;D:\filearchive&quot;.</maml:para>
 				</dev:remarks>
 			</command:example>
-		</command:examples>
-		<command:examples>
 			<command:example>
 				<maml:title>-------------------------- EXAMPLE 2 --------------------------</maml:title>
-				<maml:introduction>
-					<maml:para>
-					</maml:para>
-				</maml:introduction>
 				<dev:code>PS C:\&gt; Copy-Files C:\users\downloads D:\filearchive -Recurse -List C:\users\downloads\queue.txt</dev:code>
 				<dev:remarks>
 					<maml:para>Copy files of &quot;C:\users\downloads&quot; to &quot;D:\filearchive&quot; which specified in &quot;C:\users\downloads\queue.txt&quot;</maml:para>
