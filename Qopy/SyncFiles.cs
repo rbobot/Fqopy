@@ -56,11 +56,25 @@ namespace fqopy
         protected override void BeginProcessing()
         {
             DirectoryInfo sourceDir = new DirectoryInfo( Source );
-            DirectoryInfo destinDin = new DirectoryInfo( Destination );
+            DirectoryInfo destinDir = new DirectoryInfo( Destination );
+
+            WriteVerbose( string.Format( "{0}{1}", "Source dir name: ", sourceDir.Name ));
+            WriteVerbose( string.Format( "{0}{1}", "Destination dir name: ", destinDir.Name ));
+
+            if (string.Compare( sourceDir.Name, destinDir.Name, true) != 0)
+            {
+                Destination = Path.Combine( Destination, sourceDir.Name );
+                WriteVerbose( string.Format( "{0}{1}", "New Destination dir name: ", Destination ) );
+                if ( !Directory.Exists( Destination ) )
+                {
+                    Directory.CreateDirectory( Destination );
+                }
+                destinDir = new DirectoryInfo( Destination );
+            }
 
             // Take a snapshot of the file system.
             IEnumerable<FileInfo> sourceList = sourceDir.GetFiles( Filter, SearchOption.AllDirectories );
-            IEnumerable<FileInfo> destinList = destinDin.GetFiles( Filter, SearchOption.AllDirectories );
+            IEnumerable<FileInfo> destinList = destinDir.GetFiles( Filter, SearchOption.AllDirectories );
 
             //A custom file comparer defined below
             var myFileCompare = new FileCompare();
@@ -202,7 +216,7 @@ namespace fqopy
         // hash code.
         public int GetHashCode( FileInfo fi )
         {
-            string s = string.Format( "{0}{1}", fi.Name, fi.Length );
+            string s = string.Format( "{0}{1}{2}", fi.Name, fi.Length, fi.Directory.Name );
             return s.GetHashCode();
         }
     }
