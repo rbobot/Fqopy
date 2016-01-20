@@ -125,7 +125,7 @@ namespace fqopy
 							Directory.CreateDirectory( dir );
 						}
 					}
-					catch ( UnauthorizedAccessException ex )
+                    catch ( UnauthorizedAccessException ex )
 					{
 						WriteVerbose( ex.Message );
 					}
@@ -153,9 +153,9 @@ namespace fqopy
 					{
 						WriteVerbose( ex.Message );
 					}
-				}
+                }
 
-				foreach ( string file in listOfFiles )
+                foreach ( string file in listOfFiles )
 				{
 					string fullDestination = file.Replace( Source, Destination );
 

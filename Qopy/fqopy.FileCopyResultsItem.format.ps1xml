@@ -4,7 +4,7 @@
 		<View>
 			<Name>CopyResults</Name>
 			<ViewSelectedBy>
-				<TypeName>fqopy.FileCopyResultsItem</TypeName>
+				<TypeName>Fqopy.FileCopyResultsItem</TypeName>
 			</ViewSelectedBy>
 			<TableControl>
 				<TableHeaders>
