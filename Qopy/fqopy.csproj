@@ -54,6 +54,7 @@
     <Compile Include="FileStreamExtender.cs" />
     <Compile Include="CopyFiles.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyncFiles.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fqopy.FileCopyResultsItem.format.ps1xml">
