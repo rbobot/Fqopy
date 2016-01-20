@@ -1,7 +1,7 @@
-Qopy
+Fqopy
 ====
 
-A _Quick_ Powershell File Copy Module with CRC Check.
+A _Fast_ & _Quick_ Powershell File Copy Module with CRC Check.
 
 XCopy, Robocopy and Teracopy are all good Windows utilities for copying a large amount of files, but none of them offer easily machine-readable results report. An efficient, reliable and audit-able _copy utility_ is critical for large-scale, automated software deployments.
 
@@ -17,7 +17,7 @@ Two Cmdlets are exported.
 
 	SYNTAX
 		Copy-Files [-Source] <string> [-Destination] <string> [[-Filter] <string>]
-		[[-Recurse]] [[-SetTime]] [[-Overwrite]] [[-ShowProgress]] [[-List]] [[-PassThru]] [<CommonParameters>]
+		[[-Recurse]] [[-Fast]] [[-Overwrite]] [[-ShowProgress]] [[-List]] [[-PassThru]] [<CommonParameters>]
 
 
 	NAME
@@ -83,7 +83,7 @@ Changes
 
 1.0.3
 ----
-* Added the SetTime switch to copy timestamp metadata. This increases copy time by as much as 300%.
+* Added the Fast switch to prevent copy timestamp metadata. This increases copy time by as much as 300%.
 * Added PassThru switch
 * Added List parameter to copying files from text file with relastive paths:
 	Copy-Files C:\users\downloads D:\filearchive -Recurse -List C:\users\downloads\queue.txt
@@ -108,12 +108,12 @@ Todo
 
 Use
 ====
-**Requires Powershell v3.**
+**Requires Powershell v2.**
 
 [Binary Download](https://github.com/rbobot/Qopy/releases/)
 
 1. Extract to `C:\Users\[username]\Documents\WindowsPowerShell\Modules` 
-1.  `Import-Module Qopy`
+1.  `Import-Module Fqopy`
 
 If you use the `ShowProgress` switch without capturing the Output, the screen will get very flashy.
 
