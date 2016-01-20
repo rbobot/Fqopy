@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MoveFiles.cs" />
     <Compile Include="CopyResultsReport.cs" />
     <Compile Include="Crc32.cs" />
     <Compile Include="FileStreamExtender.cs" />
