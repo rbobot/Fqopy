@@ -58,13 +58,9 @@ namespace fqopy
             DirectoryInfo sourceDir = new DirectoryInfo( Source );
             DirectoryInfo destinDir = new DirectoryInfo( Destination );
 
-            WriteVerbose( string.Format( "{0}{1}", "Source dir name: ", sourceDir.Name ));
-            WriteVerbose( string.Format( "{0}{1}", "Destination dir name: ", destinDir.Name ));
-
             if (string.Compare( sourceDir.Name, destinDir.Name, true) != 0)
             {
                 Destination = Path.Combine( Destination, sourceDir.Name );
-                WriteVerbose( string.Format( "{0}{1}", "New Destination dir name: ", Destination ) );
                 if ( !Directory.Exists( Destination ) )
                 {
                     Directory.CreateDirectory( Destination );
@@ -103,39 +99,6 @@ namespace fqopy
 
                 dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
                                              .Except( listOfSourceDirs );
-
-                if ( dirsToCreate.Count() != 0 )
-                {
-                    WriteVerbose( "dirs to create: " );
-                    foreach ( var dir in dirsToCreate )
-                    {
-                        WriteVerbose( dir );
-                    }
-                }
-                if ( dirsToRemove.Count() != 0 )
-                {
-                    WriteVerbose( "dirs to remove: " );
-                    foreach ( var dir in dirsToRemove )
-                    {
-                        WriteVerbose( dir );
-                    }
-                }
-                if ( filesToCopy.Count() != 0 )
-                {
-                    WriteVerbose( "files to copy: " );
-                    foreach ( var file in filesToCopy )
-                    {
-                        WriteVerbose( file );
-                    }
-                }
-                if ( filesToRemove.Count() != 0 )
-                {
-                    WriteVerbose( "files to remove: " );
-                    foreach ( var file in filesToRemove )
-                    {
-                        WriteVerbose( file );
-                    }
-                }
             }
         }
 
@@ -231,7 +194,38 @@ namespace fqopy
                 {
                     if ( File.Exists( file ) )
                     {
-                        File.Delete( file );
+                        try
+                        { 
+                            File.Delete( file );
+                        }
+                        catch ( UnauthorizedAccessException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( PathTooLongException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentNullException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( ArgumentException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( DirectoryNotFoundException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( NotSupportedException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
+                        catch ( IOException ex )
+                        {
+                            WriteVerbose( ex.Message );
+                        }
                     }
                 }
             }
@@ -259,6 +253,13 @@ namespace fqopy
                     progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / i ) * ( countOfFiles - i ) );
                     WriteProgress( progress );
                 }
+            }
+
+            if ( ShowProgress )
+            {
+                progress.RecordType = ProgressRecordType.Completed;
+                progress.PercentComplete = 100;
+                WriteProgress( progress );
             }
 
         }
