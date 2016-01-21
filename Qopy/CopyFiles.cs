@@ -6,18 +6,6 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-	public class FileCopyResultsItem
-	{
-		public string Source;
-		public string Destination;
-		public long Size;
-		public TimeSpan Time;
-		public string SourceCRC;
-		public string DestinationCRC;
-		public bool Match = false;
-		public string ErrorMessage = string.Empty;
-	}
-
 	[Cmdlet( VerbsCommon.Copy, "Files" )]
 	[CmdletBinding]
 	public class CopyFiles : Cmdlet

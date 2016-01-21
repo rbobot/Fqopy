@@ -2,9 +2,9 @@
 <Configuration>
 	<ViewDefinitions>
 		<View>
-			<Name>CopyResults</Name>
+			<Name>FqopyResults</Name>
 			<ViewSelectedBy>
-				<TypeName>Fqopy.FileCopyResultsItem</TypeName>
+				<TypeName>Fqopy.FqopyResultsItem</TypeName>
 			</ViewSelectedBy>
 			<TableControl>
 				<TableHeaders>

@@ -99,7 +99,7 @@
 			<command:parameter required="false">
 				<maml:name>PassThru</maml:name>
 				<maml:description>
-					<maml:para>Passes the copying result objects to the pipeline. By default, this cmdlet does not generate any output. Needed for Get-CopyResultsReport cmdlet.</maml:para>
+					<maml:para>Passes the copying result objects to the pipeline. By default, this cmdlet does not generate any output. Needed for Get-FqopyResultsReport cmdlet.</maml:para>
 				</maml:description>
 			</command:parameter>
 		</command:parameters>
@@ -111,7 +111,7 @@
 		<command:returnValues>
 			<command:returnValue>
 				<dev:type>
-					<maml:name>Fqopy.FileCopyResultsItem</maml:name>
+					<maml:name>Fqopy.FqopyResultsItem</maml:name>
 				</dev:type>
 				<maml:description>
 					<maml:para>One result item for each Source file with Size, CRC and Match properties.</maml:para>
@@ -148,22 +148,22 @@
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
 		<command:details>
-			<command:name>Get-CopyResultsReport</command:name>
+			<command:name>Get-FqopyResultsReport</command:name>
 			<maml:description>
 				<maml:para>Aggregate output of Copy-Files</maml:para>
 			</maml:description>
 			<command:verb>Get</command:verb>
-			<command:noun>CopyResultsReport</command:noun>
+			<command:noun>FqopyResultsReport</command:noun>
 		</command:details>
 		<maml:description>
 			<maml:para>Aggregate output of Fqopy module command Copy-Files.</maml:para>
 		</maml:description>
 		<command:syntax>
 			<command:syntaxItem>
-				<maml:name>Get-CopyResultsReport</maml:name>
+				<maml:name>Get-FqopyResultsReport</maml:name>
 				<command:parameter required="true" position="named">
 					<maml:name>InputObject</maml:name>
-					<command:parameterValue required="true">FileCopyResultsItem</command:parameterValue>
+					<command:parameterValue required="true">FqopyResultsItem</command:parameterValue>
 				</command:parameter>
 			</command:syntaxItem>
 		</command:syntax>
@@ -178,7 +178,7 @@
 		<command:inputTypes>
 			<command:inputType>
 				<dev:type>
-					<maml:name>Fqopy.FileCopyResultItem</maml:name>
+					<maml:name>Fqopy.FqopyResultItem</maml:name>
 				</dev:type>
 				<maml:description>
 					<maml:para>Output of Copy-Files</maml:para>
@@ -188,7 +188,7 @@
 		<command:returnValues>
 			<command:returnValue>
 				<dev:type>
-					<maml:name>Fqopy.FileCopyResultsReport</maml:name>
+					<maml:name>Fqopy.FqopyResultsReport</maml:name>
 				</dev:type>
 				<maml:description>
 					<maml:para>Aggregate stats of Copy-Files output</maml:para>
@@ -198,7 +198,7 @@
 		<command:examples>
 			<command:example>
 				<maml:title>-------------------------- EXAMPLE 1 --------------------------</maml:title>
-				<dev:code>PS C:\&gt; $report = Copy-Files C:\users\downloads D:\filearchive -Recurse -PassThru | Get-CopyResultsReport</dev:code>
+				<dev:code>PS C:\&gt; $report = Copy-Files C:\users\downloads D:\filearchive -Recurse -PassThru | Get-FqopyResultsReport</dev:code>
 				<dev:remarks>
 					<maml:para>Aggregates the output of Copy-Files into the &quot;report&quot; variable.</maml:para>
 				</dev:remarks>

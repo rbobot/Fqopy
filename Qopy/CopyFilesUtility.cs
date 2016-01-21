@@ -7,7 +7,7 @@ namespace fqopy
 {
     class CopyFilesUtility
     {
-        public static IEnumerable<FileCopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
+        public static IEnumerable<FqopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
         {
             var crc32 = new Crc32();
             var start = DateTime.Now;
@@ -15,7 +15,7 @@ namespace fqopy
             foreach ( string file in files )
             {
                 var dest = file.Replace( source, destination );
-                var item = new FileCopyResultsItem() { Source = file, Destination = dest };
+                var item = new FqopyResultsItem() { Source = file, Destination = dest };
 
                 using ( FileStream sourceStream = File.Open( file, FileMode.Open, FileAccess.Read, FileShare.Read ) )
                 {

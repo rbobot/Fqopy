@@ -4,27 +4,39 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-    public class FileCopyResultsReport
+	public class FqopyResultsItem
+	{
+		public string Source;
+		public string Destination;
+		public long Size;
+		public TimeSpan Time;
+		public string SourceCRC;
+		public string DestinationCRC;
+		public bool Match = false;
+		public string ErrorMessage = string.Empty;
+	}
+
+	public class FqopyResultsReport
     {
         public TimeSpan TotalTime;
         public int FileCount;
         public long Bytes;
-        public List<FileCopyResultsItem> FailedItemList;
+        public List<FqopyResultsItem> FailedItemList;
 
-        public FileCopyResultsReport()
+        public FqopyResultsReport()
         {
             FileCount = 0;
-            FailedItemList = new List<FileCopyResultsItem>();
+            FailedItemList = new List<FqopyResultsItem>();
         }
     }
 
-    [Cmdlet( VerbsCommon.Get, "CopyResultsReport" )]
-    public class CopyResultsReport : Cmdlet
+    [Cmdlet( VerbsCommon.Get, "FqopyResultsReport" )]
+    public class FcopyResultsReport : Cmdlet
     {
         [Parameter( Mandatory = true, ValueFromPipeline = true )]
-        public FileCopyResultsItem InputObject { get; set; }
+        public FqopyResultsItem InputObject { get; set; }
 
-        FileCopyResultsReport report = new FileCopyResultsReport();
+        FqopyResultsReport report = new FqopyResultsReport();
 
         protected override void ProcessRecord()
         {
@@ -45,6 +57,5 @@ namespace fqopy
         {
             WriteObject( report );
         }
-
     }
 }

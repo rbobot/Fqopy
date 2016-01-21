@@ -58,7 +58,7 @@
     <Compile Include="SyncFiles.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fqopy.FileCopyResultsItem.format.ps1xml">
+    <None Include="fqopy.FqopyResultsItem.format.ps1xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </None>
