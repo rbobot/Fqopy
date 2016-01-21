@@ -6,7 +6,13 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-    [Cmdlet( "Sync", "Files" )]
+	class CustomFileInfo
+	{
+		public string FullPath;
+		public string BasePath;
+	}
+
+	[Cmdlet( "Sync", "Files" )]
     [CmdletBinding]
     public class SyncFiles : Cmdlet
     {
@@ -46,63 +52,60 @@ namespace fqopy
         [Parameter( Mandatory = false )]
         public SwitchParameter PassThru { get; set; }
 
-        IEnumerable<string> filesToCopy     = new List<string>();
-        IEnumerable<string> filesToRemove   = new List<string>();
-        IEnumerable<string> dirsToCreate = new List<string>();
-        IEnumerable<string> dirsToRemove = new List<string>();
 
-        int countOfFiles = 0;
+		IEnumerable<string> dirsToCreate;
+		IEnumerable<string> dirsToRemove;
+
+		IEnumerable<CustomFileInfo> sourceList;
+		IEnumerable<CustomFileInfo> destinList;
+
+		IEnumerable<CustomFileInfo> filesToCopy;
+		IEnumerable<CustomFileInfo> filesToRemove;
+
+		int countOfFiles = 0;
 
         protected override void BeginProcessing()
         {
-            DirectoryInfo sourceDir = new DirectoryInfo( Source );
-            DirectoryInfo destinDir = new DirectoryInfo( Destination );
 
-            if (string.Compare( sourceDir.Name, destinDir.Name, true) != 0)
-            {
-                Destination = Path.Combine( Destination, sourceDir.Name );
-                if ( !Directory.Exists( Destination ) )
-                {
-                    Directory.CreateDirectory( Destination );
-                }
-                destinDir = new DirectoryInfo( Destination );
-            }
+			var sourceIndex = new DirectoryInfo( Source );
+			var destinIndex = new DirectoryInfo( Destination );
 
-            // Take a snapshot of the file system.
-            IEnumerable<FileInfo> sourceList = sourceDir.GetFiles( Filter, SearchOption.AllDirectories );
-            IEnumerable<FileInfo> destinList = destinDir.GetFiles( Filter, SearchOption.AllDirectories );
+			// Take a snapshot of the file system.
+			sourceList = sourceIndex.GetFiles( "*.*", SearchOption.AllDirectories )
+							.Select( file => new CustomFileInfo
+							{
+								FullPath = file.FullName,
+								BasePath = Source
+							} );
 
-            //A custom file comparer defined below
-            var myFileCompare = new FileCompare();
+			destinList = destinIndex.GetFiles( "*.*", SearchOption.AllDirectories )
+							.Select( file => new CustomFileInfo
+							{
+								FullPath = file.FullName,
+								BasePath = Destination
+							} );
 
-            // This query determines whether the two folders contain
-            // identical file lists, based on the custom file comparer
-            if ( sourceList.SequenceEqual( destinList, myFileCompare ) != true )
-            {
-                // The following files are in source but not destination.
-                filesToCopy = ( from file in sourceList
-                                   select file ).Except( destinList, myFileCompare )
-                                                .Select( file => file.FullName);
-                // The following files are in destination but not source.
-                filesToRemove = ( from file in destinList
-                                     select file ).Except( sourceList, myFileCompare )
-                                                  .Select( file => file.FullName );
+			//A custom file comparer defined below
+			FileCompare complexCompare = new FileCompare();
+			SimpleCompare simpleCompare = new SimpleCompare();
 
-                IEnumerable<string> listOfSourceDirs = sourceList.Select( path => Path.GetDirectoryName( path.FullName ) )
-                                                                 .Distinct();
+			filesToCopy = sourceList.Except( destinList, complexCompare );
 
-                IEnumerable<string> listOfDestDirs = destinList.Select( path => Path.GetDirectoryName( path.FullName ) )
-                                                               .Distinct();
+			filesToRemove = destinList.Except( sourceList, complexCompare )
+										  .Except( filesToCopy, simpleCompare );
 
-                dirsToCreate = listOfSourceDirs.Select( path =>  path.Replace( Source, Destination ) )
-                                               .Except( listOfDestDirs );
+			IEnumerable<string> listOfSourceDirs = sourceList.Select( path => path.FullPath ).Distinct();
 
-                dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
-                                             .Except( listOfSourceDirs );
-            }
-        }
+			IEnumerable<string> listOfDestDirs = destinList.Select( path => path.FullPath ).Distinct();
 
-        protected override void EndProcessing()
+			dirsToCreate = listOfSourceDirs.Select( path => path.Replace( Source, Destination ) )
+										   .Except( listOfDestDirs );
+
+			dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
+										 .Except( listOfSourceDirs );
+		}
+
+		protected override void EndProcessing()
         {
             if ( dirsToCreate.Count() != 0 )
             {
@@ -190,7 +193,7 @@ namespace fqopy
 
             if ( filesToRemove.Count() != 0 )
             {
-                foreach ( string file in filesToRemove )
+                foreach ( string file in filesToRemove.Select( f => f.FullPath ) )
                 {
                     if ( File.Exists( file ) )
                     {
@@ -234,7 +237,7 @@ namespace fqopy
             var progress = new ProgressRecord( 0, string.Format( "Sync {0} with {1}", Source, Destination ), "Syncing" );
             var startTime = DateTime.Now;
 
-            foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast ) )
+            foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy.Select( f => f.FullPath ), Fast ) )
             {
                 if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
                 {
@@ -265,29 +268,47 @@ namespace fqopy
         }
     }
 
-    class FileCompare : IEqualityComparer<FileInfo>
-    {
-        public FileCompare() { }
+	class FileCompare : IEqualityComparer<CustomFileInfo>
+	{
+		public bool Equals( CustomFileInfo f1, CustomFileInfo f2 )
+		{
+			return string.Equals( f1.FullPath.Replace( f1.BasePath, "" ),
+								  f2.FullPath.Replace( f2.BasePath, "" ),
+								  StringComparison.OrdinalIgnoreCase );
+		}
 
-        public bool Equals( FileInfo f1, FileInfo f2 )
-        {
-            return ( f1.Name == f2.Name && f1.Length == f2.Length );
-        }
+		public int GetHashCode( CustomFileInfo fi )
+		{
+			return GetHashCode( fi.FullPath );
+		}
 
-        // Return a hash that reflects the comparison criteria. According to the rules for IEqualityComparer<T>,
-        // if Equals is true, then the hash codes must also be equal.
-        public int GetHashCode( FileInfo fi )
-        {
-            Crc32 crc32 = new Crc32();
-            using ( FileStream sourceFs = File.Open( fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read ) )
-            {
-                string SourceCRC = string.Empty;
-                foreach ( byte b in crc32.ComputeHash( sourceFs ) )
-                {
-                    SourceCRC += b.ToString( "x2" ).ToLower();
-                }
-                return string.Format( "{0}{1}", fi.Directory.Name, SourceCRC ).GetHashCode();
-            }
-        }
-    }
+		private static int GetHashCode( string path )
+		{
+			Crc32 crc32 = new Crc32();
+			using ( FileStream sourceFs = File.Open( path, FileMode.Open, FileAccess.Read, FileShare.Read ) )
+			{
+				string SourceCRC = string.Empty;
+				foreach ( byte b in crc32.ComputeHash( sourceFs ) )
+				{
+					SourceCRC += b.ToString( "x2" ).ToLower();
+				}
+				return SourceCRC.GetHashCode();
+			}
+		}
+	}
+
+	class SimpleCompare : IEqualityComparer<CustomFileInfo>
+	{
+		public bool Equals( CustomFileInfo f1, CustomFileInfo f2 )
+		{
+			return string.Equals( f1.FullPath.Replace( f1.BasePath, "" ),
+								  f2.FullPath.Replace( f2.BasePath, "" ),
+								  StringComparison.OrdinalIgnoreCase );
+		}
+
+		public int GetHashCode( CustomFileInfo fi )
+		{
+			return fi.FullPath.Replace( fi.BasePath, "" ).GetHashCode();
+		}
+	}
 }
