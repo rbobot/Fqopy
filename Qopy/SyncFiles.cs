@@ -41,9 +41,6 @@ namespace fqopy
 		string filter = "*";
 
 		[Parameter( Mandatory = false )]
-		public SwitchParameter Recurse { get; set; }
-
-		[Parameter( Mandatory = false )]
 		public SwitchParameter Fast { get; set; }
 
 		[Parameter( Mandatory = false )]
@@ -94,9 +91,11 @@ namespace fqopy
 			filesToRemove = destinList.Except( sourceList, complexCompare )
 										  .Except( filesToCopy, simpleCompare );
 
-			IEnumerable<string> listOfSourceDirs = sourceList.Select( path => Path.GetDirectoryName( path.FullPath ) ).Distinct();
+			IEnumerable<string> listOfSourceDirs = sourceList.Select( path => Path.GetDirectoryName( path.FullPath ) )
+															  .Distinct();
 
-			IEnumerable<string> listOfDestDirs = destinList.Select( path => Path.GetDirectoryName( path.FullPath ) ).Distinct();
+			IEnumerable<string> listOfDestDirs = destinList.Select( path => Path.GetDirectoryName( path.FullPath ) )
+														   .Distinct();
 
 			dirsToCreate = listOfSourceDirs.Select( path => path.Replace( Source, Destination ) )
 										   .Except( listOfDestDirs );
