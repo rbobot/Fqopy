@@ -68,14 +68,14 @@ namespace fqopy
 			var destinIndex = new DirectoryInfo( Destination );
 
 			// Take a snapshot of the file system.
-			sourceList = sourceIndex.GetFiles( "*.*", SearchOption.AllDirectories )
+			sourceList = sourceIndex.GetFiles( Filter, SearchOption.AllDirectories )
 							.Select( file => new CustomFileInfo
 							{
 								FullPath = file.FullName,
 								BasePath = Source
 							} );
 
-			destinList = destinIndex.GetFiles( "*.*", SearchOption.AllDirectories )
+			destinList = destinIndex.GetFiles( Filter, SearchOption.AllDirectories )
 							.Select( file => new CustomFileInfo
 							{
 								FullPath = file.FullName,
