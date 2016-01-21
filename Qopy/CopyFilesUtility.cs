@@ -7,7 +7,7 @@ namespace fqopy
 {
     class CopyFilesUtility
     {
-        public static IEnumerable<FileCopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files ) 
+        public static IEnumerable<FileCopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
         {
             var crc32 = new Crc32();
             var start = DateTime.Now;
@@ -79,7 +79,14 @@ namespace fqopy
                     }
                 }
 
-                item.Time = DateTime.Now - start;
+				if ( !fast )
+				{
+					File.SetCreationTimeUtc( dest, File.GetCreationTimeUtc( file ) );
+					File.SetLastWriteTimeUtc( dest, File.GetLastWriteTimeUtc( file ) );
+					File.SetLastAccessTimeUtc( dest, File.GetLastAccessTimeUtc( file ) );
+				}
+
+				item.Time = DateTime.Now - start;
                 item.Match = item.SourceCRC == item.DestinationCRC;
                 yield return item;
             }

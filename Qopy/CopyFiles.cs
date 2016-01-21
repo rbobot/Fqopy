@@ -155,7 +155,7 @@ namespace fqopy
 					}
 				}
 
-				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy ) )
+				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast ) )
 				{
 					if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
 					{

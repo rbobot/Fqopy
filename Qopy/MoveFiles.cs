@@ -155,7 +155,7 @@ namespace fqopy
 				var progress = new ProgressRecord( 0, string.Format( "Copy from {0} to {1}", Source, Destination ), "Copying" );
 				var startTime = DateTime.Now;
 
-				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy ) )
+				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast ) )
 				{
 					if ( string.IsNullOrEmpty( item.ErrorMessage ) )
 					{

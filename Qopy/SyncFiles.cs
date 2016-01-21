@@ -234,7 +234,7 @@ namespace fqopy
             var progress = new ProgressRecord( 0, string.Format( "Sync {0} with {1}", Source, Destination ), "Syncing" );
             var startTime = DateTime.Now;
 
-            foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy ) )
+            foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast ) )
             {
                 if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
                 {
