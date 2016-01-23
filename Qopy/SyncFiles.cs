@@ -14,7 +14,7 @@ namespace fqopy
 
 	[Cmdlet( "Sync", "Files" )]
 	[CmdletBinding]
-	public class SyncFiles : Cmdlet
+	public class SyncFiles : PSCmdlet
 	{
 		[Parameter( Mandatory = true, Position = 0 )]
 		public string Source
@@ -44,9 +44,6 @@ namespace fqopy
 		public SwitchParameter Fast { get; set; }
 
 		[Parameter( Mandatory = false )]
-		public SwitchParameter ShowProgress { get; set; }
-
-		[Parameter( Mandatory = false )]
 		public SwitchParameter PassThru { get; set; }
 
 
@@ -58,8 +55,6 @@ namespace fqopy
 
 		IEnumerable<CustomFileInfo> filesToCopy;
 		IEnumerable<CustomFileInfo> filesToRemove;
-
-		int countOfFiles = 0;
 
 		protected override void BeginProcessing()
 		{
@@ -106,10 +101,18 @@ namespace fqopy
 
 		protected override void EndProcessing()
 		{
-			if ( dirsToCreate.Count() != 0 )
+			if ( !PassThru )
+			{
+				Host.UI.RawUI.PushHostUI();
+			}
+			if ( dirsToCreate != null )
 			{
 				foreach ( string dir in dirsToCreate )
 				{
+					if ( !PassThru )
+					{
+						Host.UI.RawUI.ShowInformation( "Creating directories", dir );
+					}
 					if ( !Directory.Exists( dir ) )
 					{
 						try
@@ -148,10 +151,14 @@ namespace fqopy
 				}
 			}
 
-			if ( dirsToRemove.Count() != 0 )
+			if ( dirsToRemove != null )
 			{
 				foreach ( string dir in dirsToRemove )
 				{
+					if ( !PassThru )
+					{
+						Host.UI.RawUI.ShowInformation( "Removing directories", dir );
+					}
 					if ( Directory.Exists( dir ) )
 					{
 						try
@@ -190,10 +197,14 @@ namespace fqopy
 				}
 			}
 
-			if ( filesToRemove.Count() != 0 )
+			if ( filesToRemove != null )
 			{
 				foreach ( string file in filesToRemove.Select( f => f.FullPath ) )
 				{
+					if ( !PassThru )
+					{
+						Host.UI.RawUI.ShowInformation( "Removing files", file );
+					}
 					if ( File.Exists( file ) )
 					{
 						try
@@ -232,10 +243,6 @@ namespace fqopy
 				}
 			}
 
-			int i = 0;
-			var progress = new ProgressRecord( 0, string.Format( "Sync {0} with {1}", Source, Destination ), "Syncing" );
-			var startTime = DateTime.Now;
-
 			foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy.Select( f => f.FullPath ), Fast ) )
 			{
 				if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
@@ -247,23 +254,16 @@ namespace fqopy
 				{
 					WriteObject( item );
 				}
-
-				if ( ShowProgress )
+				else
 				{
-					int percentage = (int) ( (double) ++i / filesToCopy.Count() * 100 );
-					progress.PercentComplete = percentage <= 100 ? percentage : 100;
-					progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / i ) * ( countOfFiles - i ) );
-					WriteProgress( progress );
+					Host.UI.RawUI.ShowInformation( "Copying files", item.Source );
 				}
 			}
 
-			if ( ShowProgress )
+			if ( !PassThru )
 			{
-				progress.RecordType = ProgressRecordType.Completed;
-				progress.PercentComplete = 100;
-				WriteProgress( progress );
+				Host.UI.RawUI.PopHostUI();
 			}
-
 		}
 	}
 
@@ -283,16 +283,25 @@ namespace fqopy
 
 		private static int GetHashCode( string path )
 		{
-			Crc32 crc32 = new Crc32();
-			using ( FileStream sourceFs = File.Open( path, FileMode.Open, FileAccess.Read, FileShare.Read ) )
+			int result;
+			if ( File.Exists( path ) )
 			{
-				string SourceCRC = string.Empty;
-				foreach ( byte b in crc32.ComputeHash( sourceFs ) )
+				Crc32 crc32 = new Crc32();
+				using ( FileStream sourceFs = File.Open( path, FileMode.Open, FileAccess.Read, FileShare.Read ) )
 				{
-					SourceCRC += b.ToString( "x2" ).ToLower();
+					string SourceCRC = string.Empty;
+					foreach ( byte b in crc32.ComputeHash( sourceFs ) )
+					{
+						SourceCRC += b.ToString( "x2" ).ToLower();
+					}
+					result = SourceCRC.GetHashCode();
 				}
-				return SourceCRC.GetHashCode();
 			}
+			else
+			{
+				result = 0;
+			}
+			return result;
 		}
 	}
 

@@ -55,6 +55,7 @@
     <Compile Include="FileStreamExtender.cs" />
     <Compile Include="CopyFiles.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PSCmdletExtender.cs" />
     <Compile Include="SyncFiles.cs" />
   </ItemGroup>
   <ItemGroup>

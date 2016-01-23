@@ -20,7 +20,7 @@ namespace fqopy
 
 	[Cmdlet( VerbsCommon.Move, "Files" )]
 	[CmdletBinding]
-	public class MoveFiles : Cmdlet
+	public class MoveFiles : PSCmdlet
 	{
 		[Parameter( Mandatory = true, Position = 0 )]
 		public string Source
@@ -56,9 +56,6 @@ namespace fqopy
 		public SwitchParameter Fast { get; set; }
 
 		[Parameter( Mandatory = false )]
-		public SwitchParameter ShowProgress { get; set; }
-
-		[Parameter( Mandatory = false )]
 		public string List { get; set; }
 
 		[Parameter( Mandatory = false )]
@@ -66,7 +63,6 @@ namespace fqopy
 
 		IEnumerable<string> filesToCopy    = new List<string>();
 		IEnumerable<string> listOfDestDirs = new List<string>();
-		int countOfFiles = 0;
 		Crc32 crc32 = new Crc32();
 
 
@@ -104,7 +100,6 @@ namespace fqopy
 			if ( filesToCopy != null )
 			{
 				listOfDestDirs = filesToCopy.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct();
-				countOfFiles = filesToCopy.Count();
 			}
 		}
 
@@ -112,8 +107,17 @@ namespace fqopy
 		{
 			if ( filesToCopy != null )
 			{
+				if ( !PassThru )
+				{
+					Host.UI.RawUI.PushHostUI();
+				}
+
 				foreach ( string dir in listOfDestDirs )
 				{
+					if ( !PassThru )
+					{
+						Host.UI.RawUI.ShowInformation( "Creating directories", dir );
+					}
 					try
 					{
 						if ( !Directory.Exists( dir ) )
@@ -151,10 +155,6 @@ namespace fqopy
 					}
 				}
 
-				int i = 0;
-				var progress = new ProgressRecord( 0, string.Format( "Copy from {0} to {1}", Source, Destination ), "Copying" );
-				var startTime = DateTime.Now;
-
 				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast ) )
 				{
 					if ( string.IsNullOrEmpty( item.ErrorMessage ) )
@@ -162,12 +162,6 @@ namespace fqopy
 						try
 						{
 							File.Delete( item.Source );
-							//string parentDir = Path.GetDirectoryName( item.Source );
-							//string[] dirContent = Directory.GetFiles( parentDir, "*.*" );
-							//if ( dirContent.Length == 0 )
-							//{
-							//    Directory.Delete( parentDir );
-							//}
 						}
 						catch ( ArgumentNullException ex )
 						{
@@ -208,21 +202,15 @@ namespace fqopy
 					{
 						WriteObject( item );
 					}
-
-					if ( ShowProgress )
+					else
 					{
-						int percentage = (int) ( (double) ++i / filesToCopy.Count() * 100 );
-						progress.PercentComplete = percentage <= 100 ? percentage : 100;
-						progress.SecondsRemaining = (int) ( ( ( DateTime.Now - startTime ).TotalSeconds / i ) * ( countOfFiles - i ) );
-						WriteProgress( progress );
+						Host.UI.RawUI.ShowInformation( "Moving files", item.Source );
 					}
 				}
 
-				if ( ShowProgress )
+				if ( !PassThru )
 				{
-					progress.RecordType = ProgressRecordType.Completed;
-					progress.PercentComplete = 100;
-					WriteProgress( progress );
+					Host.UI.RawUI.PopHostUI();
 				}
 			}
 		}
