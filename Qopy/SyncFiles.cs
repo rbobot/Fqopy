@@ -105,7 +105,7 @@ namespace fqopy
 			{
 				Host.UI.RawUI.PushHostUI();
 			}
-			if ( dirsToCreate != null )
+			if ( dirsToCreate.Count() != 0 )
 			{
 				foreach ( string dir in dirsToCreate )
 				{
@@ -151,7 +151,7 @@ namespace fqopy
 				}
 			}
 
-			if ( dirsToRemove != null )
+			if ( dirsToRemove.Count() != 0 )
 			{
 				foreach ( string dir in dirsToRemove )
 				{
@@ -197,7 +197,7 @@ namespace fqopy
 				}
 			}
 
-			if ( filesToRemove != null )
+			if ( filesToRemove.Count() != 0 )
 			{
 				foreach ( string file in filesToRemove.Select( f => f.FullPath ) )
 				{
