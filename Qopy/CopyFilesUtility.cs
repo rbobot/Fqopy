@@ -11,7 +11,7 @@ namespace fqopy
 		{
 			get
 			{
-				return ( _crc32 == null ) ? new Crc32() : _crc32;
+				return ( _crc32 == null ) ? _crc32 = new Crc32() : _crc32;
 			}
 		}
 		static Crc32 _crc32;
