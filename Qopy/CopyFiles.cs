@@ -27,12 +27,7 @@ namespace fqopy
 		string destination;
 
 		[Parameter( Mandatory = false, Position = 2 )]
-		public string Filter
-		{
-			get { return filter; }
-			set { filter = value; }
-		}
-		string filter = "*";
+		public string Filter { get; set; } = "*";
 
 		[Parameter( Mandatory = false )]
 		public SwitchParameter Recurse { get; set; }
