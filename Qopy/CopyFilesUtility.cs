@@ -5,79 +5,87 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-    class CopyFilesUtility
-    {
-        public static IEnumerable<FqopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
-        {
-            var crc32 = new Crc32();
-            var start = DateTime.Now;
+	class CopyFilesUtility
+	{
+		static Crc32 Crc32
+		{
+			get
+			{
+				return ( _crc32 == null ) ? new Crc32() : _crc32;
+			}
+		}
+		static Crc32 _crc32;
 
-            foreach ( string file in files )
-            {
-                var dest = file.Replace( source, destination );
-                var item = new FqopyResultsItem() { Source = file, Destination = dest };
+		public static IEnumerable<FqopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
+		{
+			var start = DateTime.Now;
 
-                using ( FileStream sourceStream = File.Open( file, FileMode.Open, FileAccess.Read, FileShare.Read ) )
-                {
-                    try
-                    {
-                        foreach ( byte b in crc32.ComputeHash( sourceStream ) )
-                        {
-                            item.SourceCRC += b.ToString( "x2" ).ToLower();
-                        }
+			foreach ( string file in files )
+			{
+				var dest = file.Replace( source, destination );
+				var item = new FqopyResultsItem() { Source = file, Destination = dest };
 
-                        using ( FileStream destinStream = File.Open( dest, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None ) )
-                        {
-                            bool copyFlag = false;
+				using ( FileStream sourceStream = File.Open( file, FileMode.Open, FileAccess.Read, FileShare.Read ) )
+				{
+					try
+					{
+						foreach ( byte b in Crc32.ComputeHash( sourceStream ) )
+						{
+							item.SourceCRC += b.ToString( "x2" ).ToLower();
+						}
 
-                            if ( sourceStream.Length > 0 && destinStream.Length == 0 )
-                            {
-                                copyFlag = true;
-                            }
+						using ( FileStream destinStream = File.Open( dest, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None ) )
+						{
+							bool copyFlag = false;
 
-                            if ( destinStream.Length > 0 )
-                            {
-                                destinStream.SetLength( 0 );
-                                destinStream.Flush();
-                                copyFlag = true;
-                            }
+							if ( sourceStream.Length > 0 && destinStream.Length == 0 )
+							{
+								copyFlag = true;
+							}
 
-                            if ( copyFlag )
-                            {
-                                sourceStream.Position = 0;
-                                destinStream.Position = 0;
-                                sourceStream.CopyTo( destinStream );
-                            }
+							if ( destinStream.Length > 0 )
+							{
+								destinStream.SetLength( 0 );
+								destinStream.Flush();
+								copyFlag = true;
+							}
 
-                            destinStream.Position = 0;
-                            foreach ( byte b in crc32.ComputeHash( destinStream ) )
-                            {
-                                item.DestinationCRC += b.ToString( "x2" ).ToLower();
-                            }
-                            item.Size = destinStream.Length;
-                        }
-                    }
-                    catch ( UnauthorizedAccessException ex )
-                    {
-                        var er = new ErrorRecord( ex, "6", ErrorCategory.SecurityError, dest );
-                        item.ErrorMessage = er.Exception.Message;
-                    }
-                    catch ( NotSupportedException ex )
-                    {
-                        var er = new ErrorRecord( ex, "7", ErrorCategory.InvalidOperation, sourceStream );
-                        item.ErrorMessage = er.Exception.Message;
-                    }
-                    catch ( ObjectDisposedException ex )
-                    {
-                        var er = new ErrorRecord( ex, "8", ErrorCategory.ResourceUnavailable, sourceStream );
-                        item.ErrorMessage = er.Exception.Message;
-                    }
-                    catch ( IOException ex )
-                    {
-                        var er = new ErrorRecord( ex, "9", ErrorCategory.WriteError, dest );
-                        item.ErrorMessage = er.Exception.Message;
-                    }
-                }
+							if ( copyFlag )
+							{
+								sourceStream.Position = 0;
+								destinStream.Position = 0;
+								sourceStream.CopyTo( destinStream );
+							}
+
+							destinStream.Position = 0;
+							foreach ( byte b in Crc32.ComputeHash( destinStream ) )
+							{
+								item.DestinationCRC += b.ToString( "x2" ).ToLower();
+							}
+							item.Size = destinStream.Length;
+						}
+					}
+					catch ( UnauthorizedAccessException ex )
+					{
+						var er = new ErrorRecord( ex, "6", ErrorCategory.SecurityError, dest );
+						item.ErrorMessage = er.Exception.Message;
+					}
+					catch ( NotSupportedException ex )
+					{
+						var er = new ErrorRecord( ex, "7", ErrorCategory.InvalidOperation, sourceStream );
+						item.ErrorMessage = er.Exception.Message;
+					}
+					catch ( ObjectDisposedException ex )
+					{
+						var er = new ErrorRecord( ex, "8", ErrorCategory.ResourceUnavailable, sourceStream );
+						item.ErrorMessage = er.Exception.Message;
+					}
+					catch ( IOException ex )
+					{
+						var er = new ErrorRecord( ex, "9", ErrorCategory.WriteError, dest );
+						item.ErrorMessage = er.Exception.Message;
+					}
+				}
 
 				if ( !fast )
 				{
@@ -87,9 +95,9 @@ namespace fqopy
 				}
 
 				item.Time = DateTime.Now - start;
-                item.Match = item.SourceCRC == item.DestinationCRC;
-                yield return item;
-            }
-        }
-    }
+				item.Match = item.SourceCRC == item.DestinationCRC;
+				yield return item;
+			}
+		}
+	}
 }
