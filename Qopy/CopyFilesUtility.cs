@@ -16,7 +16,7 @@ namespace fqopy
 		}
 		static Crc32 _crc32;
 
-		public static IEnumerable<FqopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast ) 
+		public static IEnumerable<FqopyResultsItem> CopyFiles( string source, string destination, IEnumerable<string> files, bool fast, bool overwrite = true ) 
 		{
 			var start = DateTime.Now;
 
@@ -38,12 +38,12 @@ namespace fqopy
 						{
 							bool copyFlag = false;
 
-							if ( sourceStream.Length > 0 && destinStream.Length == 0 )
+							if ( sourceStream.Length > 0 && (destinStream.Length == 0 || overwrite ) )
 							{
 								copyFlag = true;
 							}
 
-							if ( destinStream.Length > 0 )
+							if ( destinStream.Length > 0 && overwrite )
 							{
 								destinStream.SetLength( 0 );
 								destinStream.Flush();
