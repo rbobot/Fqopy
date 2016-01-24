@@ -51,8 +51,6 @@ namespace fqopy
 
 		IEnumerable<string> filesToCopy    = new List<string>();
 		IEnumerable<string> listOfDestDirs = new List<string>();
-		Crc32 crc32 = new Crc32();
-
 
 		protected override void BeginProcessing()
 		{
