@@ -41,8 +41,6 @@ namespace fqopy
 		[Parameter( Mandatory = false )]
 		public SwitchParameter PassThru { get; set; }
 
-
-		IEnumerable<string> dirsToCreate;
 		IEnumerable<string> dirsToRemove;
 
 		IEnumerable<CustomFileInfo> sourceList;
@@ -87,9 +85,6 @@ namespace fqopy
 			IEnumerable<string> listOfDestDirs = destinList.Select( path => Path.GetDirectoryName( path.FullPath ) )
 														   .Distinct();
 
-			dirsToCreate = listOfSourceDirs.Select( path => path.Replace( Source, Destination ) )
-										   .Except( listOfDestDirs );
-
 			dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
 										 .Except( listOfSourceDirs );
 		}
@@ -99,51 +94,6 @@ namespace fqopy
 			if ( !PassThru )
 			{
 				Host.UI.RawUI.PushHostUI();
-			}
-			if ( dirsToCreate.Count() != 0 )
-			{
-				foreach ( string dir in dirsToCreate )
-				{
-					if ( !PassThru )
-					{
-						Host.UI.RawUI.ShowInformation( "Creating directories", dir );
-					}
-					if ( !Directory.Exists( dir ) )
-					{
-						try
-						{
-							Directory.CreateDirectory( dir );
-						}
-						catch ( UnauthorizedAccessException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( PathTooLongException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( ArgumentNullException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( ArgumentException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( DirectoryNotFoundException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( NotSupportedException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-						catch ( IOException ex )
-						{
-							WriteVerbose( ex.Message );
-						}
-					}
-				}
 			}
 
 			if ( dirsToRemove.Count() != 0 )

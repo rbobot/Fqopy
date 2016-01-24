@@ -89,11 +89,6 @@ namespace fqopy
 			{
 				WriteError( new ErrorRecord( ex, "4", ErrorCategory.PermissionDenied, Source ) );
 			}
-
-			if ( filesToCopy != null )
-			{
-				listOfDestDirs = filesToCopy.Select( path => Path.GetDirectoryName( path.Replace( Source, Destination ) ) ).Distinct();
-			}
 		}
 
 		protected override void EndProcessing()
@@ -103,49 +98,6 @@ namespace fqopy
 				if ( !PassThru )
 				{
 					Host.UI.RawUI.PushHostUI();
-				}
-
-				foreach ( string dir in listOfDestDirs )
-				{
-					if ( !PassThru )
-					{
-						Host.UI.RawUI.ShowInformation( "Creating directories", dir );
-					}
-					try
-					{
-						if ( !Directory.Exists( dir ) )
-						{
-							Directory.CreateDirectory( dir );
-						}
-					}
-					catch ( UnauthorizedAccessException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( PathTooLongException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( ArgumentNullException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( ArgumentException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( DirectoryNotFoundException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( NotSupportedException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
-					catch ( IOException ex )
-					{
-						WriteVerbose( ex.Message );
-					}
 				}
 
 				foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy, Fast, Overwrite ) )
@@ -184,7 +136,6 @@ namespace fqopy
 						{
 							WriteVerbose( ex.Message );
 						}
-
 					}
 					else
 					{
