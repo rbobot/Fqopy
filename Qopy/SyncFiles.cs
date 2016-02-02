@@ -6,12 +6,6 @@ using System.Management.Automation;
 
 namespace fqopy
 {
-	class CustomFileInfo
-	{
-		public string FullPath;
-		public string BasePath;
-	}
-
 	[Cmdlet( "Sync", "Files" )]
 	[CmdletBinding]
 	public class SyncFiles : PSCmdlet
@@ -41,64 +35,51 @@ namespace fqopy
 		[Parameter( Mandatory = false )]
 		public SwitchParameter PassThru { get; set; }
 
-		IEnumerable<string> dirsToRemove;
-
-		IEnumerable<CustomFileInfo> sourceList;
-		IEnumerable<CustomFileInfo> destinList;
-
-		IEnumerable<CustomFileInfo> filesToCopy;
-		IEnumerable<CustomFileInfo> filesToRemove;
+		List<string> FoldersToCopy = new List<string>();
+		List<string> FoldersToRemove = new List<string>();
+		List<string> FilesToCopy   = new List<string>();
+		List<string> FilesToRemove = new List<string>();
 
 		protected override void BeginProcessing()
-		{
-
-			var sourceIndex = new DirectoryInfo( Source );
-			var destinIndex = new DirectoryInfo( Destination );
-
-			// Take a snapshot of the file system.
-			sourceList = sourceIndex.GetFiles( Filter, SearchOption.AllDirectories )
-							.Select( file => new CustomFileInfo
-							{
-								FullPath = file.FullName,
-								BasePath = Source
-							} );
-
-			destinList = destinIndex.GetFiles( Filter, SearchOption.AllDirectories )
-							.Select( file => new CustomFileInfo
-							{
-								FullPath = file.FullName,
-								BasePath = Destination
-							} );
-
-			//A custom file comparer defined below
-			FileCompare complexCompare = new FileCompare();
-			SimpleCompare simpleCompare = new SimpleCompare();
-
-			filesToCopy = sourceList.Except( destinList, complexCompare );
-
-			filesToRemove = destinList.Except( sourceList, complexCompare )
-										  .Except( filesToCopy, simpleCompare );
-
-			IEnumerable<string> listOfSourceDirs = sourceList.Select( path => Path.GetDirectoryName( path.FullPath ) )
-															  .Distinct();
-
-			IEnumerable<string> listOfDestDirs = destinList.Select( path => Path.GetDirectoryName( path.FullPath ) )
-														   .Distinct();
-
-			dirsToRemove = listOfDestDirs.Select( path => path.Replace( Destination, Source ) )
-										 .Except( listOfSourceDirs );
-		}
-
-		protected override void EndProcessing()
 		{
 			if ( !PassThru )
 			{
 				Host.UI.RawUI.PushHostUI();
+				Host.UI.RawUI.ShowInformation( "Comparing directories", "..." );
 			}
 
-			if ( dirsToRemove.Count() != 0 )
+			CompareFolders( Source, Destination, ref FoldersToCopy, ref FoldersToRemove, ref FilesToCopy, ref FilesToRemove );
+		}
+
+		protected override void EndProcessing()
+		{
+			if ( FoldersToCopy.Count() != 0 )
 			{
-				foreach ( string dir in dirsToRemove )
+				foreach ( string dir in FoldersToCopy )
+				{
+					if ( !PassThru )
+					{
+						Host.UI.RawUI.ShowInformation( "Copying directories", dir );
+					}
+					if ( Directory.Exists( dir ) )
+					{
+						try
+						{
+							var destDir = dir.Replace( Source, Destination );
+							CopyDirectoriesUtility.DirectoryCopy(dir, destDir );
+
+						}
+						catch ( Exception ex )
+						{
+							WriteVerbose( ex.Message );
+						}
+					}
+				}
+			}
+
+			if ( FoldersToRemove.Count() != 0 )
+			{
+				foreach ( string dir in FoldersToRemove )
 				{
 					if ( !PassThru )
 					{
@@ -142,9 +123,9 @@ namespace fqopy
 				}
 			}
 
-			if ( filesToRemove.Count() != 0 )
+			if ( FilesToRemove.Count() != 0 )
 			{
-				foreach ( string file in filesToRemove.Select( f => f.FullPath ) )
+				foreach ( string file in FilesToRemove )
 				{
 					if ( !PassThru )
 					{
@@ -188,7 +169,7 @@ namespace fqopy
 				}
 			}
 
-			foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, filesToCopy.Select( f => f.FullPath ), Fast ) )
+			foreach ( var item in CopyFilesUtility.CopyFiles( Source, Destination, FilesToCopy, Fast ) )
 			{
 				if ( !string.IsNullOrEmpty( item.ErrorMessage ) )
 				{
@@ -210,15 +191,87 @@ namespace fqopy
 				Host.UI.RawUI.PopHostUI();
 			}
 		}
+
+		static void CompareFolders( string firstpath, 
+									string secondpath, 
+									ref List<string> foldersToCopy,
+									ref List<string> foldersToRemove,
+									ref List<string> filesToCopy,
+									ref List<string> filesToRemove )
+		{
+			// enumerate folders
+			IEnumerable<string> firstFolderDirectories = Directory.GetDirectories( firstpath )
+																  .Select( s => Path.GetFileName( s ) );
+			IEnumerable<string> secondFolderDirectories = Directory.GetDirectories( secondpath )
+																   .Select( s => Path.GetFileName( s ) );
+			// compare folders and collect defferencies
+			var foldersToRecurse = new List<string>();
+			foreach ( string dir in firstFolderDirectories )
+			{
+				if ( secondFolderDirectories.Contains( dir ) )
+				{
+					// collect top level folders for looping
+					foldersToRecurse.Add( Path.Combine( firstpath, dir ) );
+				}
+				else
+				{
+					// collect folders from source which not exist in destination
+					foldersToCopy.Add( Path.Combine( firstpath, dir ) );
+				}
+			}
+
+			// collect folders from destination which not exist in source
+			foreach ( string dir in secondFolderDirectories.Except( firstFolderDirectories ) )
+				foldersToRemove.Add( Path.Combine( secondpath, dir ) );
+
+			// enumerate top level files
+			IEnumerable<CustomFileInfo> firstFolderFiles = Directory.GetFiles( firstpath )
+																	.Select( s => new CustomFileInfo
+																	{
+																		FileName = Path.GetFileName( s ),
+																		FullPath = s
+																	} );
+			IEnumerable<CustomFileInfo> secondFolderFiles = Directory.GetFiles( secondpath )
+																	 .Select( s => new CustomFileInfo
+																	 {
+																		 FileName = Path.GetFileName( s ),
+																		 FullPath = s
+																	 } );
+
+			var Crc32Compare = new Crc32FileComparator();
+			var DumbCompare = new DumbFileComparator();
+
+			// collect files from source which not exist in destination
+			var differentFilesFromSource = firstFolderFiles.Except( secondFolderFiles, Crc32Compare );
+			// collect files from destination which not exist in source
+			var differentFilesFromDestin = secondFolderFiles.Except( firstFolderFiles, Crc32Compare );
+
+			// files to copy
+			foreach ( CustomFileInfo file in differentFilesFromSource )
+			{
+				filesToCopy.Add( file.FullPath );
+			}
+
+			// files to remove
+			foreach ( CustomFileInfo file in differentFilesFromDestin.Except( differentFilesFromSource, DumbCompare ) )
+			{
+				filesToRemove.Add( file.FullPath );
+			}
+
+			foreach ( string firstInnerPath in foldersToRecurse )
+			{
+				string secondInnerPath = firstInnerPath.Replace( firstpath, secondpath );
+				CompareFolders( firstInnerPath, secondInnerPath, ref foldersToCopy, ref foldersToRemove, ref filesToCopy, ref filesToRemove );
+			}
+		}
+
 	}
 
-	class FileCompare : IEqualityComparer<CustomFileInfo>
+	class Crc32FileComparator : IEqualityComparer<CustomFileInfo>
 	{
 		public bool Equals( CustomFileInfo f1, CustomFileInfo f2 )
 		{
-			return string.Equals( f1.FullPath.Replace( f1.BasePath, "" ),
-								  f2.FullPath.Replace( f2.BasePath, "" ),
-								  StringComparison.OrdinalIgnoreCase );
+			return string.Equals( f1.FileName, f2.FileName );
 		}
 
 		public int GetHashCode( CustomFileInfo fi )
@@ -226,7 +279,7 @@ namespace fqopy
 			return GetHashCode( fi.FullPath );
 		}
 
-		private static int GetHashCode( string path )
+		static int GetHashCode( string path )
 		{
 			int result;
 			if ( File.Exists( path ) )
@@ -250,18 +303,23 @@ namespace fqopy
 		}
 	}
 
-	class SimpleCompare : IEqualityComparer<CustomFileInfo>
+	class DumbFileComparator : IEqualityComparer<CustomFileInfo>
 	{
 		public bool Equals( CustomFileInfo f1, CustomFileInfo f2 )
 		{
-			return string.Equals( f1.FullPath.Replace( f1.BasePath, "" ),
-								  f2.FullPath.Replace( f2.BasePath, "" ),
-								  StringComparison.OrdinalIgnoreCase );
+			return string.Equals( f1.FileName, f2.FileName );
 		}
 
 		public int GetHashCode( CustomFileInfo fi )
 		{
-			return fi.FullPath.Replace( fi.BasePath, "" ).GetHashCode();
+			return fi.FileName.GetHashCode();
 		}
 	}
+
+	class CustomFileInfo
+	{
+		public string FileName;
+		public string FullPath;
+	}
+
 }
